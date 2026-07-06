@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Survey Tool{% endblock %}</title>
+  <style>
+    :root {
+      --brand-primary: {{ brand_primary_color }};
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      line-height: 1.5;
+      margin: 0;
+      padding: 1.5rem;
+      color: #1a1a1a;
+      background: #f8f9fa;
+    }
+    header {
+      border-bottom: 3px solid var(--brand-primary);
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: var(--brand-primary);
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      background: #e9ecef;
+      color: #495057;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    main {
+      max-width: 40rem;
+    }
+  </style>
+  <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header>
+    <h1>{{ brand_company_name }}</h1>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

@@ -1,0 +1,16 @@
+---
+description: Jinja2 + HTMX view conventions
+globs: app/templates/**/*.html
+---
+
+# Frontend (Jinja2 + HTMX)
+
+- **Server-rendered, HTMX-driven.** No React, no client build step, no npm.
+- Partials live in `app/templates/partials/` and are returned directly from routers
+  for HTMX swaps (`hx-get`/`hx-post` → partial fragment).
+- Use `hx-target` / `hx-swap` for the Drafter's flag-resolution and dependent
+  dropdowns (this solves the Zoho-form dependency problem J2 had).
+- Keep JS minimal — HTMX + a little vanilla only where unavoidable.
+- Bulk override UI: multi-select flagged APs, one reason field with autocomplete
+  (datalist or HTMX-backed suggestions from past reasons), apply-to-all button.
+- Photos and flags render from schemas/dicts passed by the router, not ORM objects.

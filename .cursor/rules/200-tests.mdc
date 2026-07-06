@@ -1,0 +1,16 @@
+---
+description: Testing conventions
+globs: tests/**/*.py
+---
+
+# Tests
+
+- Pytest. Fixtures (sample `.esx`, sample photos) live in `tests/fixtures/`.
+- **Parser tests** run against a real fixture `.esx` — assert AP names, counts, RF
+  fields survive normalization. Flag where behavior is unverified against a real J2
+  `.esx`.
+- **Merge tests** cover every flag type: exact match, missing photo, name mismatch,
+  cross-file AP disagreement, and bulk override application.
+- **Generator tests** assert the `.docx` renders and key fields/photos appear.
+- Test the hard-fail paths explicitly — the whole design hinges on never silently
+  merging.

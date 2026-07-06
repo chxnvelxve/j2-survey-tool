@@ -1,0 +1,21 @@
+---
+description: FastAPI backend conventions
+globs: app/**/*.py
+---
+
+# Backend conventions
+
+- **Routers are thin.** `app/api/` handles HTTP only; all logic lives in
+  `app/services/`. A router should validate input, call a service, render/return.
+- **Services are pure-ish.** Pipeline services (parser/merge/generator) take typed
+  inputs and return typed outputs. No FastAPI imports inside services.
+- **Models vs schemas.** SQLAlchemy models in `app/models/`; Pydantic request/response
+  schemas alongside. Don't leak ORM objects into templates — pass schemas/dicts.
+- **Config via `app/core/config.py`** (pydantic-settings, env-driven). No literals for
+  paths, secrets, branding.
+- **Storage only through `app/core/storage.py`.** Never call `open()` / build paths in
+  routers or services directly — go through the `Storage` interface so Nextcloud can
+  drop in later.
+- **DB sessions** via the dependency in `app/core/db.py`. One session per request.
+- Every schema change ships an **Alembic migration** in the same change.
+- Type-hint everything. Prefer explicit over clever.

@@ -1,0 +1,36 @@
+---
+description: Core project context and non-negotiable rules for the J2 survey tool
+alwaysApply: true
+---
+
+# J2 Survey Tool — always-apply rules
+
+You are working on a wireless site survey automation tool. Read `CLAUDE.md` and
+`docs/ARCHITECTURE.md` for full context. Nested `CLAUDE.md` files override this.
+
+## The pipeline
+`parser → merge → generator`, three swappable stages with clean typed contracts.
+Never let one stage reach into another's internals.
+
+## Non-negotiables
+- **Hard-fail on AP name mismatch** — flag, never guess or silently merge.
+- **Exact AP name** is the only join key between photos and survey APs.
+- **Phone is capture-and-upload only** — no on-device processing.
+- **Merge fires on manual push**, never automatically.
+- **Override reasons are bulk-applyable** with autocomplete from past reasons.
+- **Attachments are lists**, never single fields.
+- **Branding lives in config**, never hardcoded in engine logic ("J2" stays out of
+  the engine).
+- **Multiple `.esx` per Job** — parser runs per file.
+
+## Working style
+- Bounded, sequential work — one topic/phase at a time. No sprawling multi-area edits.
+- In Ask/Plan mode: produce a written plan, confirm scope, THEN edit.
+- Small reviewable diffs. Respect `docs/PHASES.md` — don't jump ahead.
+- Flag inline anywhere a decision depends on a blocker (real `.esx`, sample
+  deliverable, Nextcloud).
+
+## Stack guardrails
+Python 3.11+, FastAPI, Jinja2 + HTMX (no React/npm), Postgres via SQLAlchemy +
+Alembic, docxtpl for Word output. Don't add infrastructure that costs maintenance
+after handoff — this is a small fixed-fee build.

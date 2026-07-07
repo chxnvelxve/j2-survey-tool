@@ -1,0 +1,71 @@
+{% if not merged_job %}
+<p class="muted">Push merge to join photos with survey APs.</p>
+{% else %}
+<span id="job-status" hx-swap-oob="innerHTML" class="badge">{{ job_status_label(job.status) }}</span>
+
+<h4>Matched access points</h4>
+{% if merged_job.aps %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Model</th>
+      <th>Floor</th>
+      <th>Close</th>
+      <th>Far</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in merged_job.aps %}
+    <tr>
+      <td><code>{{ row.ap_name }}</code></td>
+      <td>{{ row.survey_data.model or "—" }}</td>
+      <td>{{ merged_floor_for(row.ap_name) }}</td>
+      <td>
+        {% if row.photos.close %}
+        {{ row.photos.close.original_filename }}
+        {% else %}
+        <span class="muted">—</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if row.photos.far %}
+        {{ row.photos.far.original_filename }}
+        {% else %}
+        <span class="muted">—</span>
+        {% endif %}
+      </td>
+      <td><span class="badge">{{ row.status.value }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No survey access points to merge.</p>
+{% endif %}
+
+<h4>Flags</h4>
+{% if merged_job.flags %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>AP name</th>
+      <th>Type</th>
+      <th>Detail</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for flag in merged_job.flags %}
+    <tr>
+      <td><code>{{ flag.ap_name }}</code></td>
+      <td>{{ flag_type_label(flag.type) }}</td>
+      <td>{{ flag.detail }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No flags — all APs matched cleanly.</p>
+{% endif %}
+{% endif %}

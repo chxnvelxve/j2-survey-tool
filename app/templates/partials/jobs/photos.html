@@ -3,12 +3,23 @@
 <ul>
   {% for p in job.photos %}
   <li>
-    {{ p.ap_name }} — {{ p.shot_type.value }}
+    <code>{{ p.ap_name }}</code> — {{ p.shot_type.value }}
     ({{ p.original_filename }})
     <span class="muted">{{ p.uploaded_at.strftime("%Y-%m-%d %H:%M") }}</span>
+    <button type="button"
+            class="btn-remove"
+            hx-delete="/jobs/{{ job.id }}/photos/{{ p.id }}"
+            hx-target="#photos-list"
+            hx-swap="innerHTML"
+            hx-confirm="Remove this {{ p.shot_type.value }} photo for {{ p.ap_name }}?">Remove</button>
   </li>
   {% endfor %}
 </ul>
 {% else %}
 <p class="muted">No photos uploaded yet.</p>
+{% endif %}
+{% if merged_job is defined %}
+<div id="merged-results" hx-swap-oob="innerHTML">
+  {% include "partials/jobs/merged_results.html" %}
+</div>
 {% endif %}

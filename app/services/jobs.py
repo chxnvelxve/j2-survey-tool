@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 import os
+import zipfile
+from io import BytesIO
 from typing import BinaryIO
 
 from fastapi import UploadFile
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.storage import Storage
@@ -17,12 +18,16 @@ from app.models.photo import Photo
 from app.models.survey_file import SurveyFile
 
 
-class DuplicatePhotoError(Exception):
-    """Raised when the same AP name + shot type is uploaded twice for one Job."""
+class InvalidSurveyFileError(Exception):
+    """Raised when an uploaded file is not a valid .esx ZIP archive."""
 
 
 class JobNotFoundError(Exception):
     pass
+
+
+class JobFileNotFoundError(Exception):
+    """Raised when a survey file, photo, or attachment id is not on this job."""
 
 
 def create_job(db: Session, name: str) -> Job:
@@ -81,6 +86,13 @@ def _maybe_bump_status(db: Session, job: Job) -> None:
         db.commit()
 
 
+def _invalidate_merge(job: Job) -> None:
+    """Clear stale merge snapshot when job inputs change."""
+    job.merged_snapshot = None
+    if job.status in (JobStatus.MERGED, JobStatus.FLAGS_RESOLVED):
+        job.status = JobStatus.INPUTS_UPLOADED
+
+
 def upload_survey_file(
     db: Session,
     storage: Storage,
@@ -88,7 +100,18 @@ def upload_survey_file(
     upload: UploadFile,
 ) -> SurveyFile:
     filename = upload.filename or "unknown.esx"
-    size_bytes = _file_size(upload.file)
+    upload.file.seek(0)
+    data = upload.file.read()
+    upload.file.seek(0)
+    if not data:
+        raise InvalidSurveyFileError(f"{filename}: Empty file")
+    if not zipfile.is_zipfile(BytesIO(data)):
+        raise InvalidSurveyFileError(
+            f"{filename}: Not a valid Ekahau .esx (expected ZIP archive). "
+            "Use tests/fixtures/sample_survey.esx from this repo for testing.",
+        )
+
+    size_bytes = len(data)
     rel_path = _save_file(storage, job.id, "esx", filename, upload.file)
     record = SurveyFile(
         job_id=job.id,
@@ -98,6 +121,7 @@ def upload_survey_file(
         size_bytes=size_bytes,
     )
     db.add(record)
+    _invalidate_merge(job)
     db.commit()
     db.refresh(record)
     job.survey_files.append(record)
@@ -117,23 +141,37 @@ def upload_photo(
     size_bytes = _file_size(upload.file)
     subdir_name = f"photos/{ap_name.strip()}_{shot_type.value}"
     rel_path = _save_file(storage, job.id, subdir_name, filename, upload.file)
+
+    existing = db.scalars(
+        select(Photo).where(
+            Photo.job_id == job.id,
+            Photo.ap_name == ap_name,
+            Photo.shot_type == shot_type,
+        ),
+    ).first()
+
+    if existing is not None:
+        existing.storage_path = rel_path
+        existing.original_filename = filename
+        existing.content_type = upload.content_type
+        existing.size_bytes = size_bytes
+        _invalidate_merge(job)
+        db.commit()
+        db.refresh(existing)
+        return existing
+
     record = Photo(
         job_id=job.id,
         storage_path=rel_path,
         original_filename=filename,
         content_type=upload.content_type,
         size_bytes=size_bytes,
-        ap_name=ap_name.strip(),
+        ap_name=ap_name,
         shot_type=shot_type,
     )
     db.add(record)
-    try:
-        db.commit()
-    except IntegrityError as exc:
-        db.rollback()
-        raise DuplicatePhotoError(
-            f"Photo already exists for AP {ap_name!r} ({shot_type.value})"
-        ) from exc
+    _invalidate_merge(job)
+    db.commit()
     db.refresh(record)
     job.photos.append(record)
     _maybe_bump_status(db, job)
@@ -162,3 +200,65 @@ def upload_attachment(
     job.attachments.append(record)
     _maybe_bump_status(db, job)
     return record
+
+
+def delete_survey_file(
+    db: Session,
+    storage: Storage,
+    job: Job,
+    survey_file_id: int,
+) -> None:
+    record = db.scalars(
+        select(SurveyFile).where(
+            SurveyFile.id == survey_file_id,
+            SurveyFile.job_id == job.id,
+        ),
+    ).first()
+    if record is None:
+        raise JobFileNotFoundError(f"Survey file {survey_file_id} not found on job {job.id}")
+    storage.delete(record.storage_path)
+    db.delete(record)
+    job.survey_files = [f for f in job.survey_files if f.id != survey_file_id]
+    _invalidate_merge(job)
+    db.commit()
+
+
+def delete_photo(
+    db: Session,
+    storage: Storage,
+    job: Job,
+    photo_id: int,
+) -> None:
+    record = db.scalars(
+        select(Photo).where(
+            Photo.id == photo_id,
+            Photo.job_id == job.id,
+        ),
+    ).first()
+    if record is None:
+        raise JobFileNotFoundError(f"Photo {photo_id} not found on job {job.id}")
+    storage.delete(record.storage_path)
+    db.delete(record)
+    job.photos = [p for p in job.photos if p.id != photo_id]
+    _invalidate_merge(job)
+    db.commit()
+
+
+def delete_attachment(
+    db: Session,
+    storage: Storage,
+    job: Job,
+    attachment_id: int,
+) -> None:
+    record = db.scalars(
+        select(Attachment).where(
+            Attachment.id == attachment_id,
+            Attachment.job_id == job.id,
+        ),
+    ).first()
+    if record is None:
+        raise JobFileNotFoundError(f"Attachment {attachment_id} not found on job {job.id}")
+    storage.delete(record.storage_path)
+    db.delete(record)
+    job.attachments = [a for a in job.attachments if a.id != attachment_id]
+    db.commit()

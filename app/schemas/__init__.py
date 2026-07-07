@@ -7,6 +7,16 @@ from app.schemas.job import (
     SurveyFileRead,
     job_status_label,
 )
+from app.schemas.merge import (
+    Flag,
+    FlagType,
+    MergePhotoInput,
+    MergedAP,
+    MergedAPStatus,
+    MergedJob,
+    MergedPhotoRef,
+    MergedPhotoSlots,
+)
 from app.schemas.survey import (
     ParsedSurveyFile,
     SurveyAP,
@@ -19,9 +29,17 @@ from app.schemas.survey import (
 
 __all__ = [
     "AttachmentRead",
+    "Flag",
+    "FlagType",
     "JobCreate",
     "JobListItem",
     "JobRead",
+    "MergePhotoInput",
+    "MergedAP",
+    "MergedAPStatus",
+    "MergedJob",
+    "MergedPhotoRef",
+    "MergedPhotoSlots",
     "ParsedSurveyFile",
     "PhotoRead",
     "SurveyAP",

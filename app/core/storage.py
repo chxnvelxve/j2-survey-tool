@@ -15,6 +15,7 @@ class Storage(Protocol):
     def save(self, rel_path: str, fileobj: BinaryIO) -> str: ...
     def open(self, rel_path: str) -> BinaryIO: ...
     def url_for(self, rel_path: str) -> str: ...
+    def delete(self, rel_path: str) -> None: ...
 
 
 class LocalStorage:
@@ -33,6 +34,13 @@ class LocalStorage:
 
     def url_for(self, rel_path: str) -> str:
         return f"/files/{rel_path}"
+
+    def delete(self, rel_path: str) -> None:
+        path = self.root / rel_path
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
 
 
 def get_storage() -> Storage:

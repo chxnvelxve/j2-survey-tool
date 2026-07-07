@@ -1,5 +1,11 @@
 {% include "partials/jobs/survey_files_list.html" %}
+{% if survey_upload_error %}
+<p class="error">{{ survey_upload_error }}</p>
+{% endif %}
 <span id="job-status" hx-swap-oob="innerHTML" class="badge">{{ job_status_label(job.status) }}</span>
 <div id="parsed-aps" hx-swap-oob="innerHTML">
   {% include "partials/jobs/parsed_aps.html" %}
+</div>
+<div id="merged-results" hx-swap-oob="innerHTML">
+  {% include "partials/jobs/merged_results.html" %}
 </div>

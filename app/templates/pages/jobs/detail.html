@@ -12,6 +12,8 @@
 
 <section class="upload-section">
   <h3>Survey files (.esx)</h3>
+  <p class="muted">For testing, upload <code>tests/fixtures/sample_survey.esx</code> from this repo
+    (not an old <code>sample.esx</code> placeholder).</p>
   <form hx-post="/jobs/{{ job.id }}/survey-files"
         hx-target="#survey-files-list"
         hx-swap="innerHTML"
@@ -38,6 +40,8 @@
 
 <section class="upload-section">
   <h3>AP photos</h3>
+  <p class="muted">Type the AP name <strong>exactly</strong> as shown in the Parsed access points
+    table — character for character, including spaces.</p>
   <form hx-post="/jobs/{{ job.id }}/photos"
         hx-target="#photos-list"
         hx-swap="innerHTML"
@@ -45,7 +49,7 @@
     <label>
       AP name
       <input type="text" name="ap_name" required maxlength="255"
-             placeholder="AP-01-NE">
+             placeholder="AP-01-NE" title="Must match survey AP name exactly, including spaces">
     </label>
     <label>
       Shot type
@@ -59,6 +63,18 @@
   </form>
   <div id="photos-list">
     {% include "partials/jobs/photos.html" %}
+  </div>
+</section>
+
+<section class="upload-section">
+  <h3>Merge</h3>
+  <form hx-post="/jobs/{{ job.id }}/merge"
+        hx-target="#merged-results"
+        hx-swap="innerHTML">
+    <button type="submit">Push merge</button>
+  </form>
+  <div id="merged-results">
+    {% include "partials/jobs/merged_results.html" %}
   </div>
 </section>
 

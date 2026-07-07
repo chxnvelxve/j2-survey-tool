@@ -9,6 +9,7 @@ from app.core.db import get_db
 from app.core.storage import Storage, get_storage
 from app.models.enums import PhotoShotType
 from app.schemas.job import JobCreate, JobListItem, JobRead, job_status_label
+from app.schemas.survey import floor_name_for
 from app.services.jobs import (
     DuplicatePhotoError,
     create_job,
@@ -18,6 +19,7 @@ from app.services.jobs import (
     upload_photo,
     upload_survey_file,
 )
+from app.services.survey_parse import parse_job_surveys
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 templates = Jinja2Templates(directory="app/templates")
@@ -28,8 +30,22 @@ def _base_context(**extra: object) -> dict[str, object]:
         "brand_company_name": settings.BRAND_COMPANY_NAME,
         "brand_primary_color": settings.BRAND_PRIMARY_COLOR,
         "job_status_label": job_status_label,
+        "floor_name_for": floor_name_for,
         **extra,
     }
+
+
+def _job_detail_context(
+    db: Session,
+    storage: Storage,
+    job_id: int,
+) -> dict[str, object]:
+    job = get_job(db, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job_read = JobRead.model_validate(job)
+    parsed_surveys = parse_job_surveys(db, storage, job)
+    return _base_context(job=job_read, parsed_surveys=parsed_surveys)
 
 
 @router.get("", response_class=HTMLResponse)
@@ -67,15 +83,28 @@ def jobs_detail(
     request: Request,
     job_id: int,
     db: Session = Depends(get_db),
+    storage: Storage = Depends(get_storage),
 ) -> HTMLResponse:
-    job = get_job(db, job_id)
-    if job is None:
-        raise HTTPException(status_code=404, detail="Job not found")
-    job_read = JobRead.model_validate(job)
+    ctx = _job_detail_context(db, storage, job_id)
     return templates.TemplateResponse(
         request,
         "pages/jobs/detail.html",
-        _base_context(job=job_read),
+        ctx,
+    )
+
+
+@router.post("/{job_id}/parse-surveys", response_class=HTMLResponse)
+def jobs_parse_surveys(
+    request: Request,
+    job_id: int,
+    db: Session = Depends(get_db),
+    storage: Storage = Depends(get_storage),
+) -> HTMLResponse:
+    ctx = _job_detail_context(db, storage, job_id)
+    return templates.TemplateResponse(
+        request,
+        "partials/jobs/parsed_aps.html",
+        ctx,
     )
 
 
@@ -91,13 +120,11 @@ async def jobs_upload_survey_file(
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
     upload_survey_file(db, storage, job, file)
-    job = get_job(db, job_id)
-    assert job is not None
-    job_read = JobRead.model_validate(job)
+    ctx = _job_detail_context(db, storage, job_id)
     return templates.TemplateResponse(
         request,
         "partials/jobs/survey_files.html",
-        _base_context(job=job_read),
+        ctx,
     )
 
 

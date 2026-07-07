@@ -20,7 +20,19 @@
     <button type="submit">Upload .esx</button>
   </form>
   <div id="survey-files-list">
-    {% include "partials/jobs/survey_files.html" %}
+    {% include "partials/jobs/survey_files_list.html" %}
+  </div>
+</section>
+
+<section class="upload-section">
+  <h3>Parsed access points</h3>
+  <form hx-post="/jobs/{{ job.id }}/parse-surveys"
+        hx-target="#parsed-aps"
+        hx-swap="innerHTML">
+    <button type="submit">Re-parse survey files</button>
+  </form>
+  <div id="parsed-aps">
+    {% include "partials/jobs/parsed_aps.html" %}
   </div>
 </section>
 

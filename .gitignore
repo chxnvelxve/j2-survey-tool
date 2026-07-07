@@ -4,7 +4,10 @@ __pycache__/
 .venv/
 storage/uploads/*
 storage/output/*
+storage/jobs/*
 !storage/uploads/.gitkeep
 !storage/output/.gitkeep
+!storage/jobs/.gitkeep
 *.esx
+!tests/fixtures/*.esx
 .pytest_cache/

@@ -1,10 +1,5 @@
+{% include "partials/jobs/survey_files_list.html" %}
 <span id="job-status" hx-swap-oob="innerHTML" class="badge">{{ job_status_label(job.status) }}</span>
-{% if job.survey_files %}
-<ul>
-  {% for f in job.survey_files %}
-  <li>{{ f.original_filename }} <span class="muted">({{ f.uploaded_at.strftime("%Y-%m-%d %H:%M") }})</span></li>
-  {% endfor %}
-</ul>
-{% else %}
-<p class="muted">No survey files uploaded yet.</p>
-{% endif %}
+<div id="parsed-aps" hx-swap-oob="innerHTML">
+  {% include "partials/jobs/parsed_aps.html" %}
+</div>

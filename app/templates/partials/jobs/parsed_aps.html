@@ -1,0 +1,35 @@
+{% if not job.survey_files %}
+<p class="muted">Upload a .esx to parse access points.</p>
+{% else %}
+{% for pf in parsed_surveys %}
+<div class="parsed-file">
+  <h4>{{ pf.filename }}</h4>
+  {% if pf.error %}
+  <p class="error">{{ pf.error }}</p>
+  {% elif pf.survey %}
+  {% if pf.survey.aps %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Model</th>
+        <th>Floor</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ap in pf.survey.aps %}
+      <tr>
+        <td>{{ ap.name }}</td>
+        <td>{{ ap.model or "—" }}</td>
+        <td>{{ floor_name_for(pf.survey, ap.floor_id) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">No access points found in this file.</p>
+  {% endif %}
+  {% endif %}
+</div>
+{% endfor %}
+{% endif %}

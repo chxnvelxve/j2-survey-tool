@@ -1,0 +1,14 @@
+<span id="job-status" hx-swap-oob="innerHTML" class="badge">{{ job_status_label(job.status) }}</span>
+{% if job.photos %}
+<ul>
+  {% for p in job.photos %}
+  <li>
+    {{ p.ap_name }} — {{ p.shot_type.value }}
+    ({{ p.original_filename }})
+    <span class="muted">{{ p.uploaded_at.strftime("%Y-%m-%d %H:%M") }}</span>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="muted">No photos uploaded yet.</p>
+{% endif %}

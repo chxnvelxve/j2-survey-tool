@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}New Job{% endblock %}
+
+{% block content %}
+<h2>Create job</h2>
+<p><a href="/jobs">&larr; Back to jobs</a></p>
+
+<form method="post" action="/jobs">
+  <label for="name">Job name</label>
+  <input type="text" id="name" name="name" required maxlength="255"
+         placeholder="Acme HQ Floor 2">
+  <button type="submit">Create</button>
+</form>
+{% endblock %}

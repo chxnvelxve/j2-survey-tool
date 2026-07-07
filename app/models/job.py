@@ -20,6 +20,7 @@ class Job(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[JobStatus] = mapped_column(
+        # VARCHAR storage — phase names unconfirmed (docs/DECISIONS.md #22).
         Enum(JobStatus, native_enum=False),
         nullable=False,
         default=JobStatus.AWAITING_INPUTS,

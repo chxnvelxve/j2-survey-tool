@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Jobs{% endblock %}
+
+{% block content %}
+<h2>Jobs</h2>
+<p><a href="/jobs/new">Create job</a></p>
+
+{% if jobs %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Status</th>
+      <th>Created</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for job in jobs %}
+    <tr>
+      <td><a href="/jobs/{{ job.id }}">{{ job.name }}</a></td>
+      <td><span class="badge">{{ job_status_label(job.status) }}</span></td>
+      <td>{{ job.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No jobs yet. <a href="/jobs/new">Create the first one</a>.</p>
+{% endif %}
+{% endblock %}

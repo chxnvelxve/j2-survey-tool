@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}{{ job.name }}{% endblock %}
+
+{% block content %}
+<h2>{{ job.name }}</h2>
+<p>
+  <a href="/jobs">&larr; All jobs</a>
+  &middot;
+  Status: <span id="job-status" class="badge">{{ job_status_label(job.status) }}</span>
+</p>
+
+<section class="upload-section">
+  <h3>Survey files (.esx)</h3>
+  <form hx-post="/jobs/{{ job.id }}/survey-files"
+        hx-target="#survey-files-list"
+        hx-swap="innerHTML"
+        hx-encoding="multipart/form-data">
+    <input type="file" name="file" accept=".esx" required>
+    <button type="submit">Upload .esx</button>
+  </form>
+  <div id="survey-files-list">
+    {% include "partials/jobs/survey_files.html" %}
+  </div>
+</section>
+
+<section class="upload-section">
+  <h3>AP photos</h3>
+  <form hx-post="/jobs/{{ job.id }}/photos"
+        hx-target="#photos-list"
+        hx-swap="innerHTML"
+        hx-encoding="multipart/form-data">
+    <label>
+      AP name
+      <input type="text" name="ap_name" required maxlength="255"
+             placeholder="AP-01-NE">
+    </label>
+    <label>
+      Shot type
+      <select name="shot_type" required>
+        <option value="close">Close</option>
+        <option value="far">Far</option>
+      </select>
+    </label>
+    <input type="file" name="file" accept="image/*" required>
+    <button type="submit">Upload photo</button>
+  </form>
+  <div id="photos-list">
+    {% include "partials/jobs/photos.html" %}
+  </div>
+</section>
+
+<section class="upload-section">
+  <h3>Attachments (IDF, LLD, etc.)</h3>
+  <form hx-post="/jobs/{{ job.id }}/attachments"
+        hx-target="#attachments-list"
+        hx-swap="innerHTML"
+        hx-encoding="multipart/form-data">
+    <input type="file" name="file" required>
+    <button type="submit">Upload attachment</button>
+  </form>
+  <div id="attachments-list">
+    {% include "partials/jobs/attachments.html" %}
+  </div>
+</section>
+{% endblock %}

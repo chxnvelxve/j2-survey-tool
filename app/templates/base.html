@@ -107,6 +107,25 @@
     .error { color: #842029; font-size: 0.875rem; }
     .parsed-file { margin-bottom: 1rem; }
     .parsed-file h4 { margin: 0 0 0.5rem; font-size: 0.875rem; font-weight: 600; }
+    .flag-resolve-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .flag-resolve-toolbar label { margin-bottom: 0; flex: 1; min-width: 12rem; }
+    .flag-resolve-toolbar button { margin-top: 0; flex-shrink: 0; }
+    .flag-col-select { width: 2.5rem; text-align: center; }
+    .flag-row--unresolved { background: #fff8f0; }
+    .flag-row--resolved { background: #e8f5e9; color: #495057; }
+    .badge--resolved {
+      background: #c8e6c9;
+      color: #1b5e20;
+      text-transform: none;
+      letter-spacing: normal;
+      font-weight: 500;
+    }
   </style>
   <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
   {% block head %}{% endblock %}

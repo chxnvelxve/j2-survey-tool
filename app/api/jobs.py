@@ -11,6 +11,12 @@ from app.models.enums import PhotoShotType
 from app.schemas.job import JobCreate, JobListItem, JobRead, job_status_label
 from app.schemas.merge import FLAG_TYPE_LABELS
 from app.schemas.survey import ParsedSurveyFile, floor_name_for
+from app.services.job_flag_resolution import (
+    FlagResolutionError,
+    NoMergeSnapshotError,
+    list_past_override_reasons,
+    resolve_job_flags,
+)
 from app.services.job_merge import merged_job_from_snapshot, push_job_merge
 from app.services.jobs import (
     InvalidSurveyFileError,
@@ -68,6 +74,7 @@ def _job_detail_context(
         parsed_surveys=parsed_surveys,
         merged_job=merged_job,
         merged_floor_for=lambda name: _merged_floor_for(parsed_surveys, name),
+        past_override_reasons=list_past_override_reasons(db),
     )
 
 
@@ -143,6 +150,31 @@ def jobs_push_merge(
         raise HTTPException(status_code=404, detail="Job not found")
     push_job_merge(db, storage, job)
     ctx = _job_detail_context(db, storage, job_id)
+    return templates.TemplateResponse(
+        request,
+        "partials/jobs/merged_results.html",
+        ctx,
+    )
+
+
+@router.post("/{job_id}/resolve-flags", response_class=HTMLResponse)
+def jobs_resolve_flags(
+    request: Request,
+    job_id: int,
+    flag_indices: list[int] = Form(default=[]),
+    override_reason: str = Form(default=""),
+    db: Session = Depends(get_db),
+    storage: Storage = Depends(get_storage),
+) -> HTMLResponse:
+    job = get_job(db, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    ctx = _job_detail_context(db, storage, job_id)
+    try:
+        resolve_job_flags(db, job, flag_indices, override_reason)
+        ctx = _job_detail_context(db, storage, job_id)
+    except (NoMergeSnapshotError, FlagResolutionError) as exc:
+        ctx["flag_resolve_error"] = str(exc)
     return templates.TemplateResponse(
         request,
         "partials/jobs/merged_results.html",

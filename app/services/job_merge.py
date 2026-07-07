@@ -26,7 +26,7 @@ def push_job_merge(db: Session, storage: Storage, job: Job) -> MergedJob:
     ]
     merged = merge(surveys, photo_inputs)
     job.merged_snapshot = merged.model_dump(mode="json")
-    job.status = JobStatus.MERGED
+    job.status = JobStatus.FLAGS_RESOLVED if not merged.flags else JobStatus.MERGED
     db.commit()
     db.refresh(job)
     return merged

@@ -51,6 +51,10 @@ class Flag(BaseModel):
     detail: str
     override_reason: str | None = None
 
+    @property
+    def is_resolved(self) -> bool:
+        return bool(self.override_reason and self.override_reason.strip())
+
 
 class MergedJob(BaseModel):
     aps: list[MergedAP] = Field(default_factory=list)

@@ -17,5 +17,7 @@ class Settings(BaseSettings):
     BRAND_LOGO_PATH: str = ""
     BRAND_PRIMARY_COLOR: str = "#0B3D91"
 
+    DOCX_TEMPLATE_PATH: str = "/app/templates_docx/survey_report.docx"
+
 
 settings = Settings()

@@ -1,0 +1,45 @@
+<div id="generate-section">
+  <span id="job-status" hx-swap-oob="innerHTML" class="badge">{{ job_status_label(job.status) }}</span>
+
+  <h4>Readiness</h4>
+  <p class="muted">When all checks pass, click <strong>Generate report</strong> to advance to Draft in review.</p>
+  <ul class="checklist">
+    <li class="{% if merged_job %}checklist--ok{% else %}checklist--pending{% endif %}">
+      Merge snapshot present
+    </li>
+    <li class="{% if flags_all_resolved %}checklist--ok{% else %}checklist--pending{% endif %}">
+      All flags resolved or overridden
+    </li>
+    <li class="{% if job.attachments %}checklist--ok{% else %}checklist--pending{% endif %}">
+      At least one attachment uploaded ({{ job.attachments | length }})
+    </li>
+    <li class="{% if job.status.value in ['flags_resolved', 'draft_in_review'] %}checklist--ok{% else %}checklist--pending{% endif %}">
+      Job status allows generation
+    </li>
+  </ul>
+
+  {% if generate_error %}
+  <p class="error">{{ generate_error }}</p>
+  {% endif %}
+
+  <form hx-post="/jobs/{{ job.id }}/generate"
+        hx-target="#generate-section"
+        hx-swap="outerHTML">
+    <button type="submit"
+            {% if not generate_ready %}disabled title="{{ generate_block_reason }}"{% endif %}>
+      Generate report
+    </button>
+    {% if not generate_ready and generate_block_reason %}
+    <span class="muted">{{ generate_block_reason }}</span>
+    {% endif %}
+  </form>
+
+  {% if job.deliverable_path %}
+  <p class="muted">
+  {% if job.generated_at %}
+    Generated {{ job.generated_at.strftime('%Y-%m-%d %H:%M UTC') }}.
+  {% endif %}
+    <a href="/jobs/{{ job.id }}/download">Download report (.docx)</a>
+  </p>
+  {% endif %}
+</div>

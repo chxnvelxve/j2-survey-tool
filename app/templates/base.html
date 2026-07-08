@@ -126,6 +126,24 @@
       letter-spacing: normal;
       font-weight: 500;
     }
+    .checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1rem;
+      font-size: 0.875rem;
+    }
+    .checklist li {
+      padding: 0.25rem 0 0.25rem 1.25rem;
+      position: relative;
+    }
+    .checklist li::before {
+      content: "○";
+      position: absolute;
+      left: 0;
+      color: #6c757d;
+    }
+    .checklist--ok::before { content: "✓"; color: #198754; }
+    .checklist--pending::before { content: "○"; color: #6c757d; }
   </style>
   <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
   {% block head %}{% endblock %}

@@ -1,0 +1,18 @@
+{% if job.attachments %}
+<ul>
+  {% for a in job.attachments %}
+  <li>
+    {{ a.original_filename }}
+    <span class="muted">({{ a.uploaded_at.strftime("%Y-%m-%d %H:%M") }})</span>
+    <button type="button"
+            class="btn-remove"
+            hx-delete="/jobs/{{ job.id }}/attachments/{{ a.id }}"
+            hx-target="#attachments-list"
+            hx-swap="innerHTML"
+            hx-confirm="Remove {{ a.original_filename }}?">Remove</button>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="muted">No attachments uploaded yet.</p>
+{% endif %}

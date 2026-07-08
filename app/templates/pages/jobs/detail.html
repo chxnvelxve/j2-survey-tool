@@ -74,12 +74,13 @@
     <button type="submit">Push merge</button>
   </form>
   <div id="merged-results">
-    {% include "partials/jobs/merged_results.html" %}
+    {% include "partials/jobs/merged_results_body.html" %}
   </div>
 </section>
 
 <section class="upload-section">
   <h3>Attachments (IDF, LLD, etc.)</h3>
+  <p class="muted">Upload at least one attachment before generating the report.</p>
   <form hx-post="/jobs/{{ job.id }}/attachments"
         hx-target="#attachments-list"
         hx-swap="innerHTML"
@@ -88,7 +89,12 @@
     <button type="submit">Upload attachment</button>
   </form>
   <div id="attachments-list">
-    {% include "partials/jobs/attachments.html" %}
+    {% include "partials/jobs/attachments_list.html" %}
   </div>
+</section>
+
+<section class="upload-section">
+  <h3>Generate report</h3>
+  {% include "partials/jobs/generate_section.html" %}
 </section>
 {% endblock %}

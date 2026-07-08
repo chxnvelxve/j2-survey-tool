@@ -38,6 +38,11 @@ class Job(Base):
         nullable=False,
     )
     merged_snapshot: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    deliverable_path: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    generated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
 
     survey_files: Mapped[list["SurveyFile"]] = relationship(
         back_populates="job",

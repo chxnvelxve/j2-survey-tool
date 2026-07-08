@@ -89,7 +89,13 @@ def _maybe_bump_status(db: Session, job: Job) -> None:
 def _invalidate_merge(job: Job) -> None:
     """Clear stale merge snapshot when job inputs change."""
     job.merged_snapshot = None
-    if job.status in (JobStatus.MERGED, JobStatus.FLAGS_RESOLVED):
+    job.deliverable_path = None
+    job.generated_at = None
+    if job.status in (
+        JobStatus.MERGED,
+        JobStatus.FLAGS_RESOLVED,
+        JobStatus.DRAFT_IN_REVIEW,
+    ):
         job.status = JobStatus.INPUTS_UPLOADED
 
 

@@ -3,20 +3,18 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.core.labels import job_status_label
 from app.models.enums import JobStatus, PhotoShotType
 
-JOB_STATUS_LABELS: dict[JobStatus, str] = {
-    JobStatus.AWAITING_INPUTS: "Awaiting inputs",
-    JobStatus.INPUTS_UPLOADED: "Inputs uploaded",
-    JobStatus.MERGED: "Merged",
-    JobStatus.FLAGS_RESOLVED: "Flags resolved",
-    JobStatus.DRAFT_IN_REVIEW: "Draft in review",
-    JobStatus.APPROVED: "Approved",
-}
-
-
-def job_status_label(status: JobStatus) -> str:
-    return JOB_STATUS_LABELS.get(status, status.value)
+__all__ = [
+    "AttachmentRead",
+    "JobCreate",
+    "JobListItem",
+    "JobRead",
+    "PhotoRead",
+    "SurveyFileRead",
+    "job_status_label",
+]
 
 
 class JobCreate(BaseModel):

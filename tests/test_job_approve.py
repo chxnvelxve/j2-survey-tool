@@ -88,8 +88,7 @@ def test_approval_readiness_not_draft_in_review() -> None:
         template_path=TEMPLATE,
     )
     assert ready is False
-    assert reason is not None
-    assert "draft in review" in reason.lower()
+    assert reason == "not_draft_in_review"
 
 
 def test_approval_readiness_no_deliverable() -> None:
@@ -99,7 +98,7 @@ def test_approval_readiness_no_deliverable() -> None:
         template_path=TEMPLATE,
     )
     assert ready is False
-    assert "deliverable" in reason.lower()
+    assert reason == "no_deliverable_path"
 
 
 def test_approval_readiness_no_generated_at() -> None:
@@ -109,7 +108,7 @@ def test_approval_readiness_no_generated_at() -> None:
         template_path=TEMPLATE,
     )
     assert ready is False
-    assert "generation" in reason.lower()
+    assert reason == "no_generated_at"
 
 
 def test_approval_readiness_unresolved_flags() -> None:
@@ -134,7 +133,7 @@ def test_approval_readiness_already_approved() -> None:
         template_path=TEMPLATE,
     )
     assert ready is False
-    assert "already approved" in reason.lower()
+    assert reason == "already_approved"
 
 
 def test_approval_readiness_missing_storage_file() -> None:
@@ -146,7 +145,7 @@ def test_approval_readiness_missing_storage_file() -> None:
         template_path=TEMPLATE,
     )
     assert ready is False
-    assert "storage" in reason.lower()
+    assert reason == "deliverable_missing_on_storage"
 
 
 def test_approve_job_sets_fields() -> None:

@@ -1,5 +1,10 @@
 """Central settings. Everything env-driven — no literals for paths/secrets/branding."""
+from typing import Literal
+
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+AccessMode = Literal["tailscale", "shared_password"]
 
 
 class Settings(BaseSettings):
@@ -24,6 +29,21 @@ class Settings(BaseSettings):
     BRAND_PRIMARY_COLOR: str = "#0B3D91"
 
     DOCX_TEMPLATE_PATH: str = "/app/templates_docx/survey_report.docx"
+
+    # Deploy / access (Phase 7)
+    PUBLIC_HOSTNAME: str = "survey.example.com"
+    ACCESS_MODE: AccessMode = "tailscale"
+    SHARED_ACCESS_PASSWORD: str = ""
+
+    @model_validator(mode="after")
+    def validate_access_mode(self) -> "Settings":
+        if self.ACCESS_MODE == "shared_password" and not self.SHARED_ACCESS_PASSWORD.strip():
+            raise ValueError(
+                "ACCESS_MODE=shared_password requires SHARED_ACCESS_PASSWORD to be set. "
+                "Shared-password gate is not implemented in v1 — use ACCESS_MODE=tailscale "
+                "or set the password when MODE B is enabled.",
+            )
+        return self
 
 
 settings = Settings()

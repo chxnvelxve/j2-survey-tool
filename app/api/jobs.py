@@ -6,9 +6,15 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.db import get_db
+from app.core.labels import (
+    approval_gate_label,
+    generation_gate_label,
+    job_status_label,
+    readiness_block_reason,
+)
 from app.core.storage import Storage, get_storage
 from app.models.enums import PhotoShotType
-from app.schemas.job import JobCreate, JobListItem, JobRead, job_status_label
+from app.schemas.job import JobCreate, JobListItem, JobRead
 from app.schemas.merge import FLAG_TYPE_LABELS
 from app.schemas.survey import ParsedSurveyFile, floor_name_for
 from app.services.generator.errors import GeneratorError
@@ -53,10 +59,23 @@ def _base_context(**extra: object) -> dict[str, object]:
         "brand_company_name": settings.BRAND_COMPANY_NAME,
         "brand_primary_color": settings.BRAND_PRIMARY_COLOR,
         "job_status_label": job_status_label,
+        "generation_gate_label": generation_gate_label,
+        "approval_gate_label": approval_gate_label,
         "floor_name_for": floor_name_for,
         "flag_type_label": lambda t: FLAG_TYPE_LABELS.get(t, t.value),
         **extra,
     }
+
+
+def _resolve_block_reason(key: str | None, job_status: str) -> str | None:
+    if key is None:
+        return None
+    kwargs: dict[str, object] = {}
+    if key == "wrong_status_other":
+        kwargs["status"] = job_status
+    if key == "template_missing":
+        kwargs["path"] = settings.DOCX_TEMPLATE_PATH
+    return readiness_block_reason(key, **kwargs)
 
 
 def _merged_floor_for(parsed_surveys: list[ParsedSurveyFile], ap_name: str) -> str:
@@ -80,8 +99,8 @@ def _job_detail_context(
     job_read = JobRead.model_validate(job)
     parsed_surveys = parse_job_surveys(db, storage, job)
     merged_job = merged_job_from_snapshot(job)
-    generate_ready, generate_block_reason = generation_readiness(job, merged_job)
-    approve_ready, approve_block_reason = approval_readiness(
+    generate_ready, generate_block_key = generation_readiness(job, merged_job)
+    approve_ready, approve_block_key = approval_readiness(
         job,
         merged_job,
         storage=storage,
@@ -94,11 +113,11 @@ def _job_detail_context(
         merged_floor_for=lambda name: _merged_floor_for(parsed_surveys, name),
         past_override_reasons=list_past_override_reasons(db),
         generate_ready=generate_ready,
-        generate_block_reason=generate_block_reason,
+        generate_block_reason=_resolve_block_reason(generate_block_key, job.status.value),
         flags_all_resolved=all_flags_resolved(merged_job) if merged_job else False,
         job_locked=job_is_locked(job),
         approve_ready=approve_ready,
-        approve_block_reason=approve_block_reason,
+        approve_block_reason=_resolve_block_reason(approve_block_key, job.status.value),
         overridden_flags=overridden_flags,
     )
 

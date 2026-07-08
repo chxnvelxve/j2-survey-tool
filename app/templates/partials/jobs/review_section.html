@@ -27,16 +27,16 @@
   <p class="muted">When all checks pass, click <strong>Approve</strong> to sign off on this deliverable.</p>
   <ul class="checklist">
     <li class="{% if generate_ready %}checklist--ok{% else %}checklist--pending{% endif %}">
-      Generation gates pass (merge, flags, attachments)
+      {{ approval_gate_label('generation_gates') }}
     </li>
     <li class="{% if job.status.value == 'draft_in_review' %}checklist--ok{% else %}checklist--pending{% endif %}">
-      Status is draft in review
+      {{ approval_gate_label('status_draft_in_review') }}
     </li>
     <li class="{% if job.deliverable_path and job.generated_at %}checklist--ok{% else %}checklist--pending{% endif %}">
-      Deliverable generated
+      {{ approval_gate_label('deliverable_generated') }}
     </li>
     <li class="{% if approve_ready %}checklist--ok{% else %}checklist--pending{% endif %}">
-      Deliverable file on storage
+      {{ approval_gate_label('deliverable_on_storage') }}
     </li>
   </ul>
 

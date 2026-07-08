@@ -5,6 +5,7 @@ services:
     ports:
       - "8050:8000"
     volumes:
+      # Dev hot reload — omit in production; use docker-compose.prod.yml override.
       - ./:/app
       - ./storage:/app/storage
     depends_on:

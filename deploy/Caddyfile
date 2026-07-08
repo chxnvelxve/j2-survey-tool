@@ -1,0 +1,14 @@
+# Sample Caddy reverse proxy for the J2 Survey Tool.
+#
+# Install on VPS host (not in Docker Compose):
+#   sudo apt install caddy
+#   sudo cp deploy/Caddyfile /etc/caddy/Caddyfile
+#   export PUBLIC_HOSTNAME=survey.example.com   # or set in /etc/caddy/caddy.env
+#   sudo systemctl reload caddy
+#
+# For ACCESS_MODE=tailscale (v1 default), prefer Tailscale Serve instead — see docs/deploy.md.
+# Use this Caddyfile when you have a real public domain or need MODE B (shared password + HTTPS).
+
+{$PUBLIC_HOSTNAME:survey.example.com} {
+	reverse_proxy 127.0.0.1:8050
+}

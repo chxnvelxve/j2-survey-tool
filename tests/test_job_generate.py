@@ -49,8 +49,7 @@ def test_readiness_happy_path() -> None:
 def test_readiness_no_snapshot() -> None:
     ready, reason = generation_readiness(_job(), None, template_path=TEMPLATE)
     assert ready is False
-    assert reason is not None
-    assert "merge" in reason.lower()
+    assert reason == "no_merge_snapshot"
 
 
 def test_readiness_unresolved_flags() -> None:
@@ -63,9 +62,13 @@ def test_readiness_unresolved_flags() -> None:
             ),
         ],
     )
-    ready, reason = generation_readiness(_job(status=JobStatus.MERGED), merged, template_path=TEMPLATE)
+    ready, reason = generation_readiness(
+        _job(status=JobStatus.FLAGS_RESOLVED),
+        merged,
+        template_path=TEMPLATE,
+    )
     assert ready is False
-    assert "flag" in reason.lower()
+    assert reason == "unresolved_flags"
 
 
 def test_readiness_wrong_status() -> None:
@@ -75,7 +78,7 @@ def test_readiness_wrong_status() -> None:
         template_path=TEMPLATE,
     )
     assert ready is False
-    assert reason is not None
+    assert reason == "wrong_status_other"
 
 
 def test_readiness_draft_in_review_allowed() -> None:
@@ -94,7 +97,7 @@ def test_readiness_no_attachments() -> None:
         template_path=TEMPLATE,
     )
     assert ready is False
-    assert "attachment" in reason.lower()
+    assert reason == "no_attachments"
 
 
 def test_readiness_no_aps() -> None:
@@ -104,7 +107,7 @@ def test_readiness_no_aps() -> None:
         template_path=TEMPLATE,
     )
     assert ready is False
-    assert "access point" in reason.lower()
+    assert reason == "no_access_points"
 
 
 def test_readiness_missing_template(tmp_path: Path) -> None:
@@ -114,4 +117,4 @@ def test_readiness_missing_template(tmp_path: Path) -> None:
         template_path=tmp_path / "missing.docx",
     )
     assert ready is False
-    assert "template" in reason.lower()
+    assert reason == "template_missing"

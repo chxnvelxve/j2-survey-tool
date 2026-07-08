@@ -7,6 +7,7 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.labels import readiness_block_reason
 from app.core.storage import Storage
 from app.models.enums import JobStatus
 from app.models.job import Job
@@ -28,29 +29,29 @@ def approval_readiness(
     storage: Storage | None = None,
     template_path: Path | None = None,
 ) -> tuple[bool, str | None]:
-    """Return (ready, block_reason). Composes generation_readiness with approval gates."""
+    """Return (ready, block_reason_key). Composes generation_readiness with approval gates."""
     if job.status == JobStatus.APPROVED:
-        return False, "Job is already approved."
+        return False, "already_approved"
 
     gen_ready, gen_reason = generation_readiness(job, merged, template_path=template_path)
     if not gen_ready:
         return False, gen_reason
 
     if job.status != JobStatus.DRAFT_IN_REVIEW:
-        return False, "Generate a report before approving (status must be draft in review)."
+        return False, "not_draft_in_review"
 
     if not job.deliverable_path:
-        return False, "No deliverable — generate a report first."
+        return False, "no_deliverable_path"
 
     if not job.generated_at:
-        return False, "No generation timestamp — regenerate the report."
+        return False, "no_generated_at"
 
     if storage is not None:
         try:
             handle = storage.open(job.deliverable_path)
             handle.close()
         except OSError:
-            return False, "Deliverable file not found on storage — regenerate the report."
+            return False, "deliverable_missing_on_storage"
 
     return True, None
 
@@ -73,14 +74,15 @@ def approve_job(
             "No merge snapshot on this job. Push merge before approving.",
         )
 
-    ready, reason = approval_readiness(
+    ready, reason_key = approval_readiness(
         job,
         merged,
         storage=storage,
         template_path=template_path,
     )
     if not ready:
-        raise ApproveNotAllowedError(reason or "Approval is not allowed.")
+        msg = readiness_block_reason(reason_key)
+        raise ApproveNotAllowedError(msg or readiness_block_reason("approval_not_allowed"))
 
     stripped_by = approved_by.strip() if approved_by else ""
     job.status = JobStatus.APPROVED

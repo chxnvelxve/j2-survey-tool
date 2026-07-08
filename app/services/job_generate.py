@@ -8,6 +8,7 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.labels import readiness_block_reason
 from app.core.storage import Storage
 from app.models.enums import JobStatus
 from app.models.job import Job
@@ -67,23 +68,23 @@ def generation_readiness(
     *,
     template_path: Path | None = None,
 ) -> tuple[bool, str | None]:
-    """Return (ready, block_reason). Pure check for UI and orchestration."""
+    """Return (ready, block_reason_key). Pure check for UI and orchestration."""
     template = template_path or Path(settings.DOCX_TEMPLATE_PATH)
 
     if merged is None:
-        return False, "Push merge before generating a report."
+        return False, "no_merge_snapshot"
     if job.status not in GENERATABLE_STATUSES:
         if job.status == JobStatus.MERGED:
-            return False, "Resolve all merge flags before generating."
-        return False, f"Job status must be flags resolved or draft in review (current: {job.status.value})."
+            return False, "wrong_status_merged"
+        return False, "wrong_status_other"
     if not all_flags_resolved(merged):
-        return False, "Resolve or override all merge flags before generating."
+        return False, "unresolved_flags"
     if not merged.aps:
-        return False, "No access points in merge snapshot."
+        return False, "no_access_points"
     if not job.attachments:
-        return False, "Upload at least one attachment (IDF, LLD, etc.) before generating."
+        return False, "no_attachments"
     if not template.is_file():
-        return False, f"Report template not found: {template}"
+        return False, "template_missing"
     return True, None
 
 
@@ -129,9 +130,15 @@ def generate_job_report(db: Session, storage: Storage, job: Job) -> str:
             "No merge snapshot on this job. Push merge before generating.",
         )
 
-    ready, reason = generation_readiness(job, merged)
+    ready, reason_key = generation_readiness(job, merged)
     if not ready:
-        raise GenerateNotAllowedError(reason or "Report generation is not allowed.")
+        template = Path(settings.DOCX_TEMPLATE_PATH)
+        msg = readiness_block_reason(
+            reason_key,
+            status=job.status.value,
+            path=template,
+        )
+        raise GenerateNotAllowedError(msg or readiness_block_reason("generation_not_allowed"))
 
     parsed_surveys = parse_job_surveys(db, storage, job)
     project_name = _project_name_from_parsed(parsed_surveys)

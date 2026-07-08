@@ -1,0 +1,11 @@
+# Production override — use with:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+#
+# Dev default (docker-compose.yml alone) bind-mounts ./:/app for hot reload.
+services:
+  web:
+    volumes:
+      - ./storage:/app/storage
+    ports:
+      - "127.0.0.1:8050:8000"
+    restart: unless-stopped

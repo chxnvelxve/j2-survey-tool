@@ -2,19 +2,19 @@
   <span id="job-status" hx-swap-oob="innerHTML" class="badge">{{ job_status_label(job.status) }}</span>
 
   <h4>Readiness</h4>
-  <p class="muted">When all checks pass, click <strong>Generate report</strong> to advance to Draft in review.</p>
+  <p class="muted">When all checks pass, click <strong>Generate report</strong> to advance to {{ job_status_label('draft_in_review') }}.</p>
   <ul class="checklist">
     <li class="{% if merged_job %}checklist--ok{% else %}checklist--pending{% endif %}">
-      Merge snapshot present
+      {{ generation_gate_label('merge_snapshot') }}
     </li>
     <li class="{% if flags_all_resolved %}checklist--ok{% else %}checklist--pending{% endif %}">
-      All flags resolved or overridden
+      {{ generation_gate_label('flags_resolved') }}
     </li>
     <li class="{% if job.attachments %}checklist--ok{% else %}checklist--pending{% endif %}">
-      At least one attachment uploaded ({{ job.attachments | length }})
+      {{ generation_gate_label('attachments_present') }} ({{ job.attachments | length }})
     </li>
     <li class="{% if job.status.value in ['flags_resolved', 'draft_in_review'] %}checklist--ok{% else %}checklist--pending{% endif %}">
-      Job status allows generation
+      {{ generation_gate_label('status_allows_generation') }}
     </li>
   </ul>
 
@@ -39,7 +39,7 @@
     {% endif %}
   </form>
   {% if job.deliverable_path and job.status.value == 'draft_in_review' %}
-  <p class="muted">Overwrites the existing report; status stays Draft in review.</p>
+  <p class="muted">Overwrites the existing report; status stays {{ job_status_label('draft_in_review') }}.</p>
   {% endif %}
   {% endif %}
 

@@ -65,6 +65,8 @@ class JobRead(BaseModel):
     updated_at: datetime
     generated_at: datetime | None = None
     deliverable_path: str | None = None
+    approved_at: datetime | None = None
+    approved_by: str | None = None
     survey_files: list[SurveyFileRead] = Field(default_factory=list)
     photos: list[PhotoRead] = Field(default_factory=list)
     attachments: list[AttachmentRead] = Field(default_factory=list)

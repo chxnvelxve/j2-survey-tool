@@ -43,6 +43,11 @@ class Job(Base):
         DateTime(timezone=True),
         nullable=True,
     )
+    approved_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    approved_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     survey_files: Mapped[list["SurveyFile"]] = relationship(
         back_populates="job",

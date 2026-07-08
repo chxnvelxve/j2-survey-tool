@@ -8,11 +8,13 @@ from app.models.enums import JobStatus
 from app.models.job import Job
 from app.schemas.merge import MergePhotoInput, MergedJob
 from app.services.merge.merge import merge
+from app.services.jobs import _ensure_not_locked
 from app.services.survey_parse import parse_job_surveys
 
 
 def push_job_merge(db: Session, storage: Storage, job: Job) -> MergedJob:
     """Parse all survey files, merge with photos, persist snapshot, advance status."""
+    _ensure_not_locked(job)
     parsed = parse_job_surveys(db, storage, job)
     surveys = [p.survey for p in parsed if p.survey is not None]
     photo_inputs = [

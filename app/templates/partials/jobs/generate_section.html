@@ -22,17 +22,26 @@
   <p class="error">{{ generate_error }}</p>
   {% endif %}
 
+  {% if not job_locked %}
   <form hx-post="/jobs/{{ job.id }}/generate"
         hx-target="#generate-section"
         hx-swap="outerHTML">
     <button type="submit"
             {% if not generate_ready %}disabled title="{{ generate_block_reason }}"{% endif %}>
+      {% if job.deliverable_path and job.status.value == 'draft_in_review' %}
+      Regenerate report
+      {% else %}
       Generate report
+      {% endif %}
     </button>
     {% if not generate_ready and generate_block_reason %}
     <span class="muted">{{ generate_block_reason }}</span>
     {% endif %}
   </form>
+  {% if job.deliverable_path and job.status.value == 'draft_in_review' %}
+  <p class="muted">Overwrites the existing report; status stays Draft in review.</p>
+  {% endif %}
+  {% endif %}
 
   {% if job.deliverable_path %}
   <p class="muted">

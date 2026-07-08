@@ -1,7 +1,13 @@
 {% if not merged_job %}
 <p class="muted">Push merge to join photos with survey APs.</p>
+{% if merge_error %}
+<p class="error">{{ merge_error }}</p>
+{% endif %}
 {% else %}
 <span id="job-status" hx-swap-oob="innerHTML" class="badge">{{ job_status_label(job.status) }}</span>
+{% if merge_error %}
+<p class="error">{{ merge_error }}</p>
+{% endif %}
 
 <h4>Matched access points</h4>
 {% if merged_job.aps %}
@@ -47,6 +53,35 @@
 
 <h4>Flags</h4>
 {% if merged_job.flags %}
+{% if job_locked %}
+<p class="muted">Job approved — flag resolution is locked.</p>
+<table class="table flag-table">
+  <thead>
+    <tr>
+      <th>AP name</th>
+      <th>Type</th>
+      <th>Detail</th>
+      <th>Override reason</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for flag in merged_job.flags %}
+    <tr class="{% if flag.is_resolved %}flag-row--resolved{% else %}flag-row--unresolved{% endif %}">
+      <td><code>{{ flag.ap_name }}</code></td>
+      <td>{{ flag_type_label(flag.type) }}</td>
+      <td>{{ flag.detail }}</td>
+      <td>
+        {% if flag.is_resolved %}
+        <span class="badge badge--resolved">{{ flag.override_reason }}</span>
+        {% else %}
+        <span class="muted">—</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
 <p class="muted">Fix photos or survey inputs and push merge again to clear flags, or select
 flags below and apply an override reason when the issue cannot be fixed.</p>
 {% if flag_resolve_error %}
@@ -130,6 +165,7 @@ flags below and apply an override reason when the issue cannot be fixed.</p>
   });
 })();
 </script>
+{% endif %}
 {% else %}
 <p class="muted">No flags — all APs matched cleanly.</p>
 {% endif %}

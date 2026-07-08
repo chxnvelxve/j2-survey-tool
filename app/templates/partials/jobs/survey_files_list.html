@@ -4,12 +4,14 @@
   <li>
     {{ f.original_filename }}
     <span class="muted">({{ f.uploaded_at.strftime("%Y-%m-%d %H:%M") }})</span>
+    {% if not job_locked %}
     <button type="button"
             class="btn-remove"
             hx-delete="/jobs/{{ job.id }}/survey-files/{{ f.id }}"
             hx-target="#survey-files-list"
             hx-swap="innerHTML"
             hx-confirm="Remove {{ f.original_filename }}?">Remove</button>
+    {% endif %}
   </li>
   {% endfor %}
 </ul>

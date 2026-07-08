@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 
 from app.models.enums import JobStatus
 from app.models.job import Job
-from app.schemas.merge import Flag, MergedJob
+from app.schemas.merge import FLAG_TYPE_LABELS, Flag, MergedJob
+from app.services.jobs import _ensure_not_locked
 
 
 class NoMergeSnapshotError(Exception):
@@ -54,6 +55,23 @@ def list_past_override_reasons(db: Session, *, limit: int = 100) -> list[str]:
     return reasons_from_snapshots(snapshots, limit=limit)
 
 
+def list_overridden_flags(merged: MergedJob) -> list[dict[str, str]]:
+    """Return read-only audit rows for flags with override reasons."""
+    rows: list[dict[str, str]] = []
+    for flag in sorted(merged.flags, key=lambda row: row.ap_name):
+        if not flag.override_reason or not flag.override_reason.strip():
+            continue
+        rows.append(
+            {
+                "ap_name": flag.ap_name,
+                "type_label": FLAG_TYPE_LABELS.get(flag.type, flag.type.value),
+                "detail": flag.detail,
+                "reason": flag.override_reason.strip(),
+            },
+        )
+    return rows
+
+
 def apply_override_reasons(
     merged: MergedJob,
     indices: list[int],
@@ -93,6 +111,7 @@ def resolve_job_flags(
     override_reason: str,
 ) -> MergedJob:
     """Apply override reasons to selected flags and persist snapshot + status."""
+    _ensure_not_locked(job)
     if job.merged_snapshot is None:
         raise NoMergeSnapshotError(
             "No merge snapshot on this job. Push merge before resolving flags.",

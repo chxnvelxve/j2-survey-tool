@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     STORAGE_BACKEND: str = "local"
     STORAGE_LOCAL_ROOT: str = "/app/storage"
 
+    # Nextcloud — blocked on Josh (#12); stub raises if STORAGE_BACKEND=nextcloud.
+    NEXTCLOUD_URL: str = ""
+    NEXTCLOUD_USERNAME: str = ""
+    NEXTCLOUD_PASSWORD: str = ""
+    NEXTCLOUD_WEBDAV_ROOT: str = ""
+
     # Branding — kept OUT of engine code so the tool re-skins per client.
     BRAND_COMPANY_NAME: str = "J2 Communications"
     BRAND_LOGO_PATH: str = ""

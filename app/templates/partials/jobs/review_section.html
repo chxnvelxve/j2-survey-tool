@@ -1,0 +1,65 @@
+<div id="review-section">
+  <span id="job-status" hx-swap-oob="innerHTML" class="badge">{{ job_status_label(job.status) }}</span>
+
+  {% if job.deliverable_path %}
+  <p class="muted">
+    {% if job.generated_at %}
+    Generated {{ job.generated_at.strftime('%Y-%m-%d %H:%M UTC') }}.
+    {% endif %}
+    <a href="/jobs/{{ job.id }}/download">Download report (.docx)</a>
+  </p>
+  {% elif job.status.value == 'inputs_uploaded' and merged_job %}
+  <p class="muted">Deliverable is stale — re-merge and regenerate before approval.</p>
+  {% endif %}
+
+  {% if job.approved_at %}
+  <p class="muted">
+    Approved {{ job.approved_at.strftime('%Y-%m-%d %H:%M UTC') }}
+    {% if job.approved_by %}by {{ job.approved_by }}{% endif %}.
+  </p>
+  {% endif %}
+
+  <h4>Override audit</h4>
+  {% include "partials/jobs/override_audit.html" %}
+
+  {% if not job_locked %}
+  <h4>Approval readiness</h4>
+  <p class="muted">When all checks pass, click <strong>Approve</strong> to sign off on this deliverable.</p>
+  <ul class="checklist">
+    <li class="{% if generate_ready %}checklist--ok{% else %}checklist--pending{% endif %}">
+      Generation gates pass (merge, flags, attachments)
+    </li>
+    <li class="{% if job.status.value == 'draft_in_review' %}checklist--ok{% else %}checklist--pending{% endif %}">
+      Status is draft in review
+    </li>
+    <li class="{% if job.deliverable_path and job.generated_at %}checklist--ok{% else %}checklist--pending{% endif %}">
+      Deliverable generated
+    </li>
+    <li class="{% if approve_ready %}checklist--ok{% else %}checklist--pending{% endif %}">
+      Deliverable file on storage
+    </li>
+  </ul>
+
+  {% if approve_error %}
+  <p class="error">{{ approve_error }}</p>
+  {% endif %}
+
+  <form hx-post="/jobs/{{ job.id }}/approve"
+        hx-target="#review-section"
+        hx-swap="outerHTML">
+    <label>
+      Approved by (optional)
+      <input type="text" name="approved_by" maxlength="255" placeholder="Name or initials">
+    </label>
+    <button type="submit"
+            {% if not approve_ready %}disabled title="{{ approve_block_reason }}"{% endif %}>
+      Approve
+    </button>
+    {% if not approve_ready and approve_block_reason %}
+    <span class="muted">{{ approve_block_reason }}</span>
+    {% endif %}
+  </form>
+  {% else %}
+  <p class="muted">This job is approved and locked.</p>
+  {% endif %}
+</div>

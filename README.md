@@ -12,6 +12,8 @@ docker compose up --build   # web + postgres (runs alembic upgrade head on start
 # open http://localhost:8050/health  — JSON health check
 ```
 
+Production deploy → [`docs/deploy.md`](docs/deploy.md).
+
 Local dev without Docker: `alembic upgrade head` then `uvicorn app.main:app --reload`.
 
 ## Architecture

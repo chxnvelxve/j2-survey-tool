@@ -10,8 +10,13 @@
   Status: <span id="job-status" class="badge">{{ job_status_label(job.status) }}</span>
 </p>
 
+{% if job_locked %}
+<p class="muted">This job is approved — inputs are read-only. Download the report from Generate or Review below.</p>
+{% endif %}
+
 <section class="upload-section">
   <h3>Survey files (.esx)</h3>
+  {% if not job_locked %}
   <p class="muted">For testing, upload <code>tests/fixtures/sample_survey.esx</code> from this repo
     (not an old <code>sample.esx</code> placeholder).</p>
   <form hx-post="/jobs/{{ job.id }}/survey-files"
@@ -21,6 +26,7 @@
     <input type="file" name="file" accept=".esx" required>
     <button type="submit">Upload .esx</button>
   </form>
+  {% endif %}
   <div id="survey-files-list">
     {% include "partials/jobs/survey_files_list.html" %}
   </div>
@@ -28,11 +34,13 @@
 
 <section class="upload-section">
   <h3>Parsed access points</h3>
+  {% if not job_locked %}
   <form hx-post="/jobs/{{ job.id }}/parse-surveys"
         hx-target="#parsed-aps"
         hx-swap="innerHTML">
     <button type="submit">Re-parse survey files</button>
   </form>
+  {% endif %}
   <div id="parsed-aps">
     {% include "partials/jobs/parsed_aps.html" %}
   </div>
@@ -40,6 +48,7 @@
 
 <section class="upload-section">
   <h3>AP photos</h3>
+  {% if not job_locked %}
   <p class="muted">Type the AP name <strong>exactly</strong> as shown in the Parsed access points
     table — character for character, including spaces.</p>
   <form hx-post="/jobs/{{ job.id }}/photos"
@@ -61,6 +70,7 @@
     <input type="file" name="file" accept="image/*" required>
     <button type="submit">Upload photo</button>
   </form>
+  {% endif %}
   <div id="photos-list">
     {% include "partials/jobs/photos.html" %}
   </div>
@@ -68,11 +78,13 @@
 
 <section class="upload-section">
   <h3>Merge</h3>
+  {% if not job_locked %}
   <form hx-post="/jobs/{{ job.id }}/merge"
         hx-target="#merged-results"
         hx-swap="innerHTML">
     <button type="submit">Push merge</button>
   </form>
+  {% endif %}
   <div id="merged-results">
     {% include "partials/jobs/merged_results_body.html" %}
   </div>
@@ -80,6 +92,7 @@
 
 <section class="upload-section">
   <h3>Attachments (IDF, LLD, etc.)</h3>
+  {% if not job_locked %}
   <p class="muted">Upload at least one attachment before generating the report.</p>
   <form hx-post="/jobs/{{ job.id }}/attachments"
         hx-target="#attachments-list"
@@ -88,6 +101,7 @@
     <input type="file" name="file" required>
     <button type="submit">Upload attachment</button>
   </form>
+  {% endif %}
   <div id="attachments-list">
     {% include "partials/jobs/attachments_list.html" %}
   </div>
@@ -96,5 +110,10 @@
 <section class="upload-section">
   <h3>Generate report</h3>
   {% include "partials/jobs/generate_section.html" %}
+</section>
+
+<section class="upload-section">
+  <h3>Review &amp; sign-off</h3>
+  {% include "partials/jobs/review_section.html" %}
 </section>
 {% endblock %}

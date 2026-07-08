@@ -11,11 +11,16 @@ from typing import BinaryIO, Protocol
 from app.core.config import settings
 
 
+class StorageNotConfiguredError(Exception):
+    """Storage backend selected but not configured or not yet implemented."""
+
+
 class Storage(Protocol):
     def save(self, rel_path: str, fileobj: BinaryIO) -> str: ...
     def open(self, rel_path: str) -> BinaryIO: ...
     def url_for(self, rel_path: str) -> str: ...
     def delete(self, rel_path: str) -> None: ...
+    def filesystem_path(self, rel_path: str) -> Path: ...
 
 
 class LocalStorage:
@@ -42,7 +47,22 @@ class LocalStorage:
         except FileNotFoundError:
             pass
 
+    def filesystem_path(self, rel_path: str) -> Path:
+        return self.root / rel_path
+
+
+class NextcloudStorage:
+    """Stub — full WebDAV impl blocked on Josh (docs/DECISIONS.md #12)."""
+
+    def __init__(self) -> None:
+        raise StorageNotConfiguredError(
+            "Nextcloud storage is not configured. "
+            "Waiting on Nextcloud access from Josh (docs/DECISIONS.md #12). "
+            "Set STORAGE_BACKEND=local for now.",
+        )
+
 
 def get_storage() -> Storage:
-    # Phase 6: branch on settings.STORAGE_BACKEND for NextcloudStorage.
+    if settings.STORAGE_BACKEND == "nextcloud":
+        return NextcloudStorage()
     return LocalStorage()

@@ -30,6 +30,19 @@ class JobFileNotFoundError(Exception):
     """Raised when a survey file, photo, or attachment id is not on this job."""
 
 
+class JobLockedError(Exception):
+    """Job is approved; mutating operations are not allowed."""
+
+
+def job_is_locked(job: Job) -> bool:
+    return job.status == JobStatus.APPROVED
+
+
+def _ensure_not_locked(job: Job) -> None:
+    if job_is_locked(job):
+        raise JobLockedError("This job is approved and cannot be modified.")
+
+
 def create_job(db: Session, name: str) -> Job:
     job = Job(name=name.strip())
     db.add(job)
@@ -105,6 +118,7 @@ def upload_survey_file(
     job: Job,
     upload: UploadFile,
 ) -> SurveyFile:
+    _ensure_not_locked(job)
     filename = upload.filename or "unknown.esx"
     upload.file.seek(0)
     data = upload.file.read()
@@ -143,6 +157,7 @@ def upload_photo(
     ap_name: str,
     shot_type: PhotoShotType,
 ) -> Photo:
+    _ensure_not_locked(job)
     filename = upload.filename or "photo.jpg"
     size_bytes = _file_size(upload.file)
     subdir_name = f"photos/{ap_name.strip()}_{shot_type.value}"
@@ -190,6 +205,7 @@ def upload_attachment(
     job: Job,
     upload: UploadFile,
 ) -> Attachment:
+    _ensure_not_locked(job)
     filename = upload.filename or "attachment"
     size_bytes = _file_size(upload.file)
     rel_path = _save_file(storage, job.id, "attachments", filename, upload.file)
@@ -214,6 +230,7 @@ def delete_survey_file(
     job: Job,
     survey_file_id: int,
 ) -> None:
+    _ensure_not_locked(job)
     record = db.scalars(
         select(SurveyFile).where(
             SurveyFile.id == survey_file_id,
@@ -235,6 +252,7 @@ def delete_photo(
     job: Job,
     photo_id: int,
 ) -> None:
+    _ensure_not_locked(job)
     record = db.scalars(
         select(Photo).where(
             Photo.id == photo_id,
@@ -256,6 +274,7 @@ def delete_attachment(
     job: Job,
     attachment_id: int,
 ) -> None:
+    _ensure_not_locked(job)
     record = db.scalars(
         select(Attachment).where(
             Attachment.id == attachment_id,

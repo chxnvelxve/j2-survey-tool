@@ -12,10 +12,12 @@ from app.schemas.job import JobCreate, JobListItem, JobRead, job_status_label
 from app.schemas.merge import FLAG_TYPE_LABELS
 from app.schemas.survey import ParsedSurveyFile, floor_name_for
 from app.services.generator.errors import GeneratorError
+from app.services.job_approve import ApproveNotAllowedError, approval_readiness, approve_job
 from app.services.job_flag_resolution import (
     FlagResolutionError,
     NoMergeSnapshotError,
     all_flags_resolved,
+    list_overridden_flags,
     list_past_override_reasons,
     resolve_job_flags,
 )
@@ -28,11 +30,13 @@ from app.services.job_merge import merged_job_from_snapshot, push_job_merge
 from app.services.jobs import (
     InvalidSurveyFileError,
     JobFileNotFoundError,
+    JobLockedError,
     create_job,
     delete_attachment,
     delete_photo,
     delete_survey_file,
     get_job,
+    job_is_locked,
     list_jobs,
     upload_attachment,
     upload_photo,
@@ -77,6 +81,12 @@ def _job_detail_context(
     parsed_surveys = parse_job_surveys(db, storage, job)
     merged_job = merged_job_from_snapshot(job)
     generate_ready, generate_block_reason = generation_readiness(job, merged_job)
+    approve_ready, approve_block_reason = approval_readiness(
+        job,
+        merged_job,
+        storage=storage,
+    )
+    overridden_flags = list_overridden_flags(merged_job) if merged_job else []
     return _base_context(
         job=job_read,
         parsed_surveys=parsed_surveys,
@@ -86,6 +96,10 @@ def _job_detail_context(
         generate_ready=generate_ready,
         generate_block_reason=generate_block_reason,
         flags_all_resolved=all_flags_resolved(merged_job) if merged_job else False,
+        job_locked=job_is_locked(job),
+        approve_ready=approve_ready,
+        approve_block_reason=approve_block_reason,
+        overridden_flags=overridden_flags,
     )
 
 
@@ -159,8 +173,12 @@ def jobs_push_merge(
     job = get_job(db, job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
-    push_job_merge(db, storage, job)
     ctx = _job_detail_context(db, storage, job_id)
+    try:
+        push_job_merge(db, storage, job)
+        ctx = _job_detail_context(db, storage, job_id)
+    except JobLockedError as exc:
+        ctx["merge_error"] = str(exc)
     return templates.TemplateResponse(
         request,
         "partials/jobs/merged_results.html",
@@ -182,11 +200,35 @@ def jobs_generate_report(
     try:
         generate_job_report(db, storage, job)
         ctx = _job_detail_context(db, storage, job_id)
-    except (NoMergeSnapshotError, GenerateNotAllowedError, GeneratorError) as exc:
+    except (NoMergeSnapshotError, GenerateNotAllowedError, GeneratorError, JobLockedError) as exc:
         ctx["generate_error"] = str(exc)
     return templates.TemplateResponse(
         request,
-        "partials/jobs/generate_section.html",
+        "partials/jobs/generate_response.html",
+        ctx,
+    )
+
+
+@router.post("/{job_id}/approve", response_class=HTMLResponse)
+def jobs_approve(
+    request: Request,
+    job_id: int,
+    approved_by: str = Form(default=""),
+    db: Session = Depends(get_db),
+    storage: Storage = Depends(get_storage),
+) -> HTMLResponse:
+    job = get_job(db, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    ctx = _job_detail_context(db, storage, job_id)
+    try:
+        approve_job(db, job, approved_by=approved_by, storage=storage)
+        ctx = _job_detail_context(db, storage, job_id)
+    except (ApproveNotAllowedError, NoMergeSnapshotError, JobLockedError) as exc:
+        ctx["approve_error"] = str(exc)
+    return templates.TemplateResponse(
+        request,
+        "partials/jobs/approve_response.html",
         ctx,
     )
 
@@ -230,7 +272,7 @@ def jobs_resolve_flags(
     try:
         resolve_job_flags(db, job, flag_indices, override_reason)
         ctx = _job_detail_context(db, storage, job_id)
-    except (NoMergeSnapshotError, FlagResolutionError) as exc:
+    except (NoMergeSnapshotError, FlagResolutionError, JobLockedError) as exc:
         ctx["flag_resolve_error"] = str(exc)
     return templates.TemplateResponse(
         request,
@@ -260,6 +302,14 @@ async def jobs_upload_survey_file(
             "partials/jobs/survey_files.html",
             ctx,
         )
+    except JobLockedError as exc:
+        ctx = _job_detail_context(db, storage, job_id)
+        ctx["survey_upload_error"] = str(exc)
+        return templates.TemplateResponse(
+            request,
+            "partials/jobs/survey_files.html",
+            ctx,
+        )
     ctx = _job_detail_context(db, storage, job_id)
     return templates.TemplateResponse(
         request,
@@ -281,14 +331,21 @@ async def jobs_upload_photo(
     job = get_job(db, job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
-    upload_photo(db, storage, job, file, ap_name, shot_type)
-    job = get_job(db, job_id)
-    assert job is not None
-    job_read = JobRead.model_validate(job)
+    try:
+        upload_photo(db, storage, job, file, ap_name, shot_type)
+    except JobLockedError as exc:
+        ctx = _job_detail_context(db, storage, job_id)
+        ctx["photo_upload_error"] = str(exc)
+        return templates.TemplateResponse(
+            request,
+            "partials/jobs/photos.html",
+            ctx,
+        )
+    ctx = _job_detail_context(db, storage, job_id)
     return templates.TemplateResponse(
         request,
         "partials/jobs/photos.html",
-        _base_context(job=job_read),
+        ctx,
     )
 
 
@@ -303,7 +360,16 @@ async def jobs_upload_attachment(
     job = get_job(db, job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
-    upload_attachment(db, storage, job, file)
+    try:
+        upload_attachment(db, storage, job, file)
+    except JobLockedError as exc:
+        ctx = _job_detail_context(db, storage, job_id)
+        ctx["attachment_upload_error"] = str(exc)
+        return templates.TemplateResponse(
+            request,
+            "partials/jobs/attachments.html",
+            ctx,
+        )
     ctx = _job_detail_context(db, storage, job_id)
     return templates.TemplateResponse(
         request,
@@ -327,6 +393,14 @@ def jobs_delete_survey_file(
         delete_survey_file(db, storage, job, survey_file_id)
     except JobFileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except JobLockedError as exc:
+        ctx = _job_detail_context(db, storage, job_id)
+        ctx["survey_upload_error"] = str(exc)
+        return templates.TemplateResponse(
+            request,
+            "partials/jobs/survey_files.html",
+            ctx,
+        )
     ctx = _job_detail_context(db, storage, job_id)
     return templates.TemplateResponse(
         request,
@@ -350,6 +424,14 @@ def jobs_delete_photo(
         delete_photo(db, storage, job, photo_id)
     except JobFileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except JobLockedError as exc:
+        ctx = _job_detail_context(db, storage, job_id)
+        ctx["photo_upload_error"] = str(exc)
+        return templates.TemplateResponse(
+            request,
+            "partials/jobs/photos.html",
+            ctx,
+        )
     ctx = _job_detail_context(db, storage, job_id)
     return templates.TemplateResponse(
         request,
@@ -373,6 +455,14 @@ def jobs_delete_attachment(
         delete_attachment(db, storage, job, attachment_id)
     except JobFileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except JobLockedError as exc:
+        ctx = _job_detail_context(db, storage, job_id)
+        ctx["attachment_upload_error"] = str(exc)
+        return templates.TemplateResponse(
+            request,
+            "partials/jobs/attachments.html",
+            ctx,
+        )
     ctx = _job_detail_context(db, storage, job_id)
     return templates.TemplateResponse(
         request,

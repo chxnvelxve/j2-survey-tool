@@ -1,0 +1,24 @@
+{% if overridden_flags %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>AP name</th>
+      <th>Type</th>
+      <th>Detail</th>
+      <th>Override reason</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in overridden_flags %}
+    <tr>
+      <td><code>{{ row.ap_name }}</code></td>
+      <td>{{ row.type_label }}</td>
+      <td>{{ row.detail }}</td>
+      <td><span class="badge badge--resolved">{{ row.reason }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No overrides — all flags matched cleanly or were resolved without override.</p>
+{% endif %}

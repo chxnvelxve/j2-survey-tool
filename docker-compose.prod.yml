@@ -1,11 +1,15 @@
-# Production override — use with:
+﻿# Production override — use with:
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
 #
 # Dev default (docker-compose.yml alone) bind-mounts ./:/app for hot reload.
+# Compose merges list keys by appending; !override replaces base ports/volumes so we
+# do not double-bind 8050 or keep the code bind-mount in production.
+# Requires Docker Compose v2.24+ (!override).
+# Note: !reset alone nullifies the key (Compose v5); use !override to replace lists.
 services:
   web:
-    volumes:
+    volumes: !override
       - ./storage:/app/storage
-    ports:
+    ports: !override
       - "127.0.0.1:8050:8000"
     restart: unless-stopped

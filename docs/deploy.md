@@ -38,7 +38,13 @@ The bundled [`docker-compose.yml`](../docker-compose.yml) bind-mounts `./:/app` 
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
 ```
 
-[`docker-compose.prod.yml`](../docker-compose.prod.yml) removes the code bind-mount, binds `127.0.0.1:8050` only, and sets `restart: unless-stopped`. Migrations run automatically via [`scripts/entrypoint.sh`](../scripts/entrypoint.sh) on web container start.
+[`docker-compose.prod.yml`](../docker-compose.prod.yml) uses Compose `!override` on `ports` and `volumes` so the prod file **replaces** (not appends) the base mappings: no code bind-mount, `127.0.0.1:8050` only, and `restart: unless-stopped`. Requires Docker Compose v2.24+ (`!override` / `!reset`). Migrations run automatically via [`scripts/entrypoint.sh`](../scripts/entrypoint.sh) on web container start.
+
+Before first start, create the storage dirs if missing:
+
+```bash
+mkdir -p storage/uploads storage/output storage/jobs
+```
 
 ## Volumes
 
@@ -99,6 +105,10 @@ tailscale serve --bg --https=443 http://127.0.0.1:8050
 # https://<machine-name>.<tailnet>.ts.net/
 ```
 
+If the CLI prints **Serve is not enabled on your tailnet**, a tailnet admin must open the
+URL Tailscale prints (or Admin console → DNS / Serve) and enable Serve for the node, then
+re-run the `tailscale serve` command.
+
 To remove: `tailscale serve reset`
 
 ### Alternative: Caddy (public domain or MODE B)
@@ -120,7 +130,7 @@ Caddy reverse-proxies to `127.0.0.1:8050` where Docker exposes the web container
 
 1. Clone the repo on the VPS.
 2. `cp .env.example .env` — set `APP_ENV=production`, strong `SECRET_KEY`, DB passwords, `ACCESS_MODE=tailscale`.
-3. Ensure `tests/fixtures/sample_survey.esx` exists (committed) or run `python tests/fixtures/build_sample_survey.py`.
+3. Ensure `tests/fixtures/sample_survey.esx` exists (committed alias of `edge_cases`) or run `python tests/fixtures/build_sample_survey.py`.
 4. `docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d`
 5. `curl -s http://127.0.0.1:8050/health` — expect `{"status":"ok","env":"production"}`.
 6. `tailscale serve --bg --https=443 http://127.0.0.1:8050`
@@ -139,5 +149,7 @@ Caddy reverse-proxies to `127.0.0.1:8050` where Docker exposes the web container
 | `connection refused` on 8050 | `docker compose ps` — is `web` up? Prod compose binds `127.0.0.1` only |
 | App won't start, ACCESS_MODE error | `.env` has valid `ACCESS_MODE`; don't use `shared_password` until MODE B exists |
 | 502 from Tailscale Serve | App not listening on `127.0.0.1:8050`; verify health curl locally first |
+| `Serve is not enabled on your tailnet` | Admin must enable Serve in the Tailscale console (URL printed by CLI), then re-run `tailscale serve` |
+| Port 8050 already in use / web Created exit 128 | Prod override must use `ports: !override` (not append); see `docker-compose.prod.yml` |
 | `web` has no Docker network / can't resolve `db` | Port bind failed on first start (e.g. Windows Docker + `127.0.0.1:8050`); `docker compose rm -sf web` then `up -d` again when port is free |
 | Uploads/deliverables missing after restart | Ensure `./storage` host directory exists and is mounted |

@@ -3,9 +3,11 @@
 {% block title %}{{ job.name }}{% endblock %}
 
 {% block content %}
-<h2>{{ job.name }}</h2>
-<p>
+  <h2>{{ job.name }}</h2>
+<p class="page-nav">
   <a href="/jobs">&larr; All jobs</a>
+  &middot;
+  <a href="/jobs/{{ job.id }}/capture">Field capture</a>
   &middot;
   Status: <span id="job-status" class="badge">{{ job_status_label(job.status) }}</span>
 </p>

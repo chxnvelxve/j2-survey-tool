@@ -16,6 +16,7 @@ from app.models.enums import JobStatus, PhotoShotType
 from app.models.job import Job
 from app.models.photo import Photo
 from app.models.survey_file import SurveyFile
+from app.schemas.job import JobSettingsUpdate
 
 
 class InvalidSurveyFileError(Exception):
@@ -67,6 +68,25 @@ def get_job(db: Session, job_id: int) -> Job | None:
         )
     )
     return db.scalars(stmt).first()
+
+
+def _blank_to_none(value: str | None) -> str | None:
+    if value is None:
+        return None
+    stripped = value.strip()
+    return stripped or None
+
+
+def update_job_settings(db: Session, job: Job, settings: JobSettingsUpdate) -> Job:
+    """Persist capture-time job settings. Does not change status or readiness."""
+    _ensure_not_locked(job)
+    job.survey_type = _blank_to_none(settings.survey_type)
+    job.location_vertical = _blank_to_none(settings.location_vertical)
+    job.band_plan = _blank_to_none(settings.band_plan)
+    job.site_metadata = _blank_to_none(settings.site_metadata)
+    db.commit()
+    db.refresh(job)
+    return job
 
 
 def _file_size(fileobj: BinaryIO) -> int | None:

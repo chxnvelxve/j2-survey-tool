@@ -11,3 +11,4 @@ storage/jobs/*
 *.esx
 !tests/fixtures/*.esx
 .pytest_cache/
+QA-REPORT.md

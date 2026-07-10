@@ -1,0 +1,10 @@
+{# Collapses long flag detail text; short text stays inline. #}
+{% set detail = flag.detail %}
+{% if detail|length > 96 %}
+<details class="flag-detail">
+  <summary>{{ detail[:96].rstrip() }}…</summary>
+  <p class="flag-detail__full">{{ detail }}</p>
+</details>
+{% else %}
+<p class="item-card__detail">{{ detail }}</p>
+{% endif %}

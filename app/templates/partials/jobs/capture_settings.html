@@ -1,0 +1,48 @@
+{% if settings_error %}
+<p class="error">{{ settings_error }}</p>
+{% endif %}
+{% if settings_saved %}
+<p class="muted">Settings saved.</p>
+{% endif %}
+{% if job_locked %}
+<dl class="capture-settings-readonly">
+  <dt>Survey type</dt>
+  <dd>{{ job.survey_type or "—" }}</dd>
+  <dt>Location vertical</dt>
+  <dd>{{ job.location_vertical or "—" }}</dd>
+  <dt>Band plan</dt>
+  <dd>{{ job.band_plan or "—" }}</dd>
+  <dt>Site metadata</dt>
+  <dd>{{ job.site_metadata or "—" }}</dd>
+</dl>
+{% else %}
+<form hx-post="/jobs/{{ job.id }}/settings"
+      hx-target="#capture-settings"
+      hx-swap="innerHTML">
+  <label class="capture-label">
+    Survey type
+    <input type="text" name="survey_type" class="touch-target"
+           value="{{ job.survey_type or '' }}" maxlength="255"
+           placeholder="e.g. validation, predictive">
+  </label>
+  <label class="capture-label">
+    Location vertical
+    <input type="text" name="location_vertical" class="touch-target"
+           value="{{ job.location_vertical or '' }}" maxlength="255"
+           placeholder="e.g. warehouse, office">
+  </label>
+  <label class="capture-label">
+    Band plan
+    <input type="text" name="band_plan" class="touch-target"
+           value="{{ job.band_plan or '' }}" maxlength="255"
+           placeholder="e.g. 5 GHz preferred">
+  </label>
+  <label class="capture-label">
+    Site metadata
+    <input type="text" name="site_metadata" class="touch-target"
+           value="{{ job.site_metadata or '' }}" maxlength="1024"
+           placeholder="Customer, address, date, notes">
+  </label>
+  <button type="submit" class="touch-target">Save settings</button>
+</form>
+{% endif %}

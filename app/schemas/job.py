@@ -11,6 +11,7 @@ __all__ = [
     "JobCreate",
     "JobListItem",
     "JobRead",
+    "JobSettingsUpdate",
     "PhotoRead",
     "SurveyFileRead",
     "job_status_label",
@@ -19,6 +20,15 @@ __all__ = [
 
 class JobCreate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
+
+
+class JobSettingsUpdate(BaseModel):
+    """Per-job capture settings — store only; not readiness-gated (Phase 11)."""
+
+    survey_type: str | None = Field(default=None, max_length=255)
+    location_vertical: str | None = Field(default=None, max_length=255)
+    band_plan: str | None = Field(default=None, max_length=255)
+    site_metadata: str | None = Field(default=None, max_length=1024)
 
 
 class FileRecordRead(BaseModel):
@@ -65,6 +75,10 @@ class JobRead(BaseModel):
     deliverable_path: str | None = None
     approved_at: datetime | None = None
     approved_by: str | None = None
+    survey_type: str | None = None
+    location_vertical: str | None = None
+    band_plan: str | None = None
+    site_metadata: str | None = None
     survey_files: list[SurveyFileRead] = Field(default_factory=list)
     photos: list[PhotoRead] = Field(default_factory=list)
     attachments: list[AttachmentRead] = Field(default_factory=list)

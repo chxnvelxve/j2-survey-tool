@@ -42,3 +42,19 @@ def parse_job_surveys(_db: Session, storage: Storage, job: Job) -> list[ParsedSu
                 ),
             )
     return results
+
+
+def flatten_ap_names(parsed_surveys: list[ParsedSurveyFile]) -> list[str]:
+    """Unique AP names from parsed surveys, exact strings preserved, first-seen order."""
+    seen: set[str] = set()
+    names: list[str] = []
+    for pf in parsed_surveys:
+        if pf.survey is None:
+            continue
+        for ap in pf.survey.aps:
+            if ap.name in seen:
+                continue
+            seen.add(ap.name)
+            names.append(ap.name)
+    return names
+

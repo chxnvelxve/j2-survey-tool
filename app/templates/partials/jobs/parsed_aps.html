@@ -10,29 +10,28 @@
   {% if pf.survey.aps %}
   <p class="muted">When uploading photos, type the <strong>Name</strong> exactly as shown below
     — including any spaces at the start or end.</p>
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Model</th>
-        <th>Floor</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for ap in pf.survey.aps %}
-      <tr>
-        <td>
-          <code>{{ ap.name }}</code>
-          {% if ap.name != ap.name.strip() %}
-          <span class="muted">(has extra spaces)</span>
-          {% endif %}
-        </td>
-        <td>{{ ap.model or "—" }}</td>
-        <td>{{ floor_name_for(pf.survey, ap.floor_id) }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <ul class="card-list">
+    {% for ap in pf.survey.aps %}
+    <li class="item-card">
+      <div class="item-card__title">
+        <code>{{ ap.name }}</code>
+        {% if ap.name != ap.name.strip() %}
+        <span class="muted">(has extra spaces)</span>
+        {% endif %}
+      </div>
+      <dl class="item-card__fields">
+        <div>
+          <dt>Model</dt>
+          <dd>{{ ap.model or "—" }}</dd>
+        </div>
+        <div>
+          <dt>Floor</dt>
+          <dd>{{ floor_name_for(pf.survey, ap.floor_id) }}</dd>
+        </div>
+      </dl>
+    </li>
+    {% endfor %}
+  </ul>
   {% else %}
   <p class="muted">No access points found in this file.</p>
   {% endif %}

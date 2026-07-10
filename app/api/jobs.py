@@ -14,7 +14,7 @@ from app.core.labels import (
 )
 from app.core.storage import Storage, get_storage
 from app.models.enums import PhotoShotType
-from app.schemas.job import JobCreate, JobListItem, JobRead
+from app.schemas.job import JobCreate, JobListItem, JobRead, JobSettingsUpdate
 from app.schemas.merge import FLAG_TYPE_LABELS
 from app.schemas.survey import ParsedSurveyFile, floor_name_for
 from app.services.generator.errors import GeneratorError
@@ -44,11 +44,12 @@ from app.services.jobs import (
     get_job,
     job_is_locked,
     list_jobs,
+    update_job_settings,
     upload_attachment,
     upload_photo,
     upload_survey_file,
 )
-from app.services.survey_parse import parse_job_surveys
+from app.services.survey_parse import flatten_ap_names, parse_job_surveys
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 templates = Jinja2Templates(directory="app/templates")
@@ -163,6 +164,73 @@ def jobs_detail(
     return templates.TemplateResponse(
         request,
         "pages/jobs/detail.html",
+        ctx,
+    )
+
+
+def _capture_context(
+    db: Session,
+    storage: Storage,
+    job_id: int,
+) -> dict[str, object]:
+    job = get_job(db, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    job_read = JobRead.model_validate(job)
+    parsed_surveys = parse_job_surveys(db, storage, job)
+    ap_names = flatten_ap_names(parsed_surveys)
+    return _base_context(
+        job=job_read,
+        ap_names=ap_names,
+        job_locked=job_is_locked(job),
+    )
+
+
+@router.get("/{job_id}/capture", response_class=HTMLResponse)
+def jobs_capture(
+    request: Request,
+    job_id: int,
+    db: Session = Depends(get_db),
+    storage: Storage = Depends(get_storage),
+) -> HTMLResponse:
+    ctx = _capture_context(db, storage, job_id)
+    return templates.TemplateResponse(
+        request,
+        "pages/jobs/capture.html",
+        ctx,
+    )
+
+
+@router.post("/{job_id}/settings", response_class=HTMLResponse)
+def jobs_update_settings(
+    request: Request,
+    job_id: int,
+    survey_type: str = Form(default=""),
+    location_vertical: str = Form(default=""),
+    band_plan: str = Form(default=""),
+    site_metadata: str = Form(default=""),
+    db: Session = Depends(get_db),
+    storage: Storage = Depends(get_storage),
+) -> HTMLResponse:
+    job = get_job(db, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    payload = JobSettingsUpdate(
+        survey_type=survey_type or None,
+        location_vertical=location_vertical or None,
+        band_plan=band_plan or None,
+        site_metadata=site_metadata or None,
+    )
+    ctx = _capture_context(db, storage, job_id)
+    try:
+        update_job_settings(db, job, payload)
+        ctx = _capture_context(db, storage, job_id)
+        ctx["settings_saved"] = True
+    except JobLockedError as exc:
+        ctx["settings_error"] = str(exc)
+    return templates.TemplateResponse(
+        request,
+        "partials/jobs/capture_settings.html",
         ctx,
     )
 
@@ -337,6 +405,14 @@ async def jobs_upload_survey_file(
     )
 
 
+def _photo_partial_name(request: Request) -> str:
+    """Return capture photos partial when HTMX targets the capture list."""
+    target = (request.headers.get("HX-Target") or "").lstrip("#")
+    if target == "capture-photos-list":
+        return "partials/jobs/capture_photos.html"
+    return "partials/jobs/photos.html"
+
+
 @router.post("/{job_id}/photos", response_class=HTMLResponse)
 async def jobs_upload_photo(
     request: Request,
@@ -350,22 +426,24 @@ async def jobs_upload_photo(
     job = get_job(db, job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
+    partial = _photo_partial_name(request)
+    use_capture = partial.endswith("capture_photos.html")
     try:
         upload_photo(db, storage, job, file, ap_name, shot_type)
     except JobLockedError as exc:
-        ctx = _job_detail_context(db, storage, job_id)
-        ctx["photo_upload_error"] = str(exc)
-        return templates.TemplateResponse(
-            request,
-            "partials/jobs/photos.html",
-            ctx,
+        ctx = (
+            _capture_context(db, storage, job_id)
+            if use_capture
+            else _job_detail_context(db, storage, job_id)
         )
-    ctx = _job_detail_context(db, storage, job_id)
-    return templates.TemplateResponse(
-        request,
-        "partials/jobs/photos.html",
-        ctx,
+        ctx["photo_upload_error"] = str(exc)
+        return templates.TemplateResponse(request, partial, ctx)
+    ctx = (
+        _capture_context(db, storage, job_id)
+        if use_capture
+        else _job_detail_context(db, storage, job_id)
     )
+    return templates.TemplateResponse(request, partial, ctx)
 
 
 @router.post("/{job_id}/attachments", response_class=HTMLResponse)
@@ -439,24 +517,26 @@ def jobs_delete_photo(
     job = get_job(db, job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
+    partial = _photo_partial_name(request)
+    use_capture = partial.endswith("capture_photos.html")
     try:
         delete_photo(db, storage, job, photo_id)
     except JobFileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except JobLockedError as exc:
-        ctx = _job_detail_context(db, storage, job_id)
-        ctx["photo_upload_error"] = str(exc)
-        return templates.TemplateResponse(
-            request,
-            "partials/jobs/photos.html",
-            ctx,
+        ctx = (
+            _capture_context(db, storage, job_id)
+            if use_capture
+            else _job_detail_context(db, storage, job_id)
         )
-    ctx = _job_detail_context(db, storage, job_id)
-    return templates.TemplateResponse(
-        request,
-        "partials/jobs/photos.html",
-        ctx,
+        ctx["photo_upload_error"] = str(exc)
+        return templates.TemplateResponse(request, partial, ctx)
+    ctx = (
+        _capture_context(db, storage, job_id)
+        if use_capture
+        else _job_detail_context(db, storage, job_id)
     )
+    return templates.TemplateResponse(request, partial, ctx)
 
 
 @router.delete("/{job_id}/attachments/{attachment_id}", response_class=HTMLResponse)

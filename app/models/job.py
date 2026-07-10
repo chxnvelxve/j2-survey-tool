@@ -48,6 +48,11 @@ class Job(Base):
         nullable=True,
     )
     approved_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Capture-time settings (Phase 11). Loose strings — Phase 9 owns taxonomy later.
+    survey_type: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    location_vertical: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    band_plan: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    site_metadata: Mapped[str | None] = mapped_column(String(1024), nullable=True)
 
     survey_files: Mapped[list["SurveyFile"]] = relationship(
         back_populates="job",

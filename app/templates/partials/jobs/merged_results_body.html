@@ -11,42 +11,46 @@
 
 <h4>Matched access points</h4>
 {% if merged_job.aps %}
-<table class="table">
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Model</th>
-      <th>Floor</th>
-      <th>Close</th>
-      <th>Far</th>
-      <th>Status</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for row in merged_job.aps %}
-    <tr>
-      <td><code>{{ row.ap_name }}</code></td>
-      <td>{{ row.survey_data.model or "—" }}</td>
-      <td>{{ merged_floor_for(row.ap_name) }}</td>
-      <td>
-        {% if row.photos.close %}
-        {{ row.photos.close.original_filename }}
-        {% else %}
-        <span class="muted">—</span>
-        {% endif %}
-      </td>
-      <td>
-        {% if row.photos.far %}
-        {{ row.photos.far.original_filename }}
-        {% else %}
-        <span class="muted">—</span>
-        {% endif %}
-      </td>
-      <td><span class="badge">{{ row.status.value }}</span></td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<ul class="card-list">
+  {% for row in merged_job.aps %}
+  <li class="item-card">
+    <div class="item-card__header">
+      <span class="item-card__title"><code>{{ row.ap_name }}</code></span>
+      <span class="badge">{{ row.status.value }}</span>
+    </div>
+    <dl class="item-card__fields">
+      <div>
+        <dt>Model</dt>
+        <dd>{{ row.survey_data.model or "—" }}</dd>
+      </div>
+      <div>
+        <dt>Floor</dt>
+        <dd>{{ merged_floor_for(row.ap_name) }}</dd>
+      </div>
+      <div>
+        <dt>Close</dt>
+        <dd>
+          {% if row.photos.close %}
+          {{ row.photos.close.original_filename }}
+          {% else %}
+          <span class="muted">—</span>
+          {% endif %}
+        </dd>
+      </div>
+      <div>
+        <dt>Far</dt>
+        <dd>
+          {% if row.photos.far %}
+          {{ row.photos.far.original_filename }}
+          {% else %}
+          <span class="muted">—</span>
+          {% endif %}
+        </dd>
+      </div>
+    </dl>
+  </li>
+  {% endfor %}
+</ul>
 {% else %}
 <p class="muted">No survey access points to merge.</p>
 {% endif %}
@@ -55,32 +59,20 @@
 {% if merged_job.flags %}
 {% if job_locked %}
 <p class="muted">Job approved — flag resolution is locked.</p>
-<table class="table flag-table">
-  <thead>
-    <tr>
-      <th>AP name</th>
-      <th>Type</th>
-      <th>Detail</th>
-      <th>Override reason</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for flag in merged_job.flags %}
-    <tr class="{% if flag.is_resolved %}flag-row--resolved{% else %}flag-row--unresolved{% endif %}">
-      <td><code>{{ flag.ap_name }}</code></td>
-      <td>{{ flag_type_label(flag.type) }}</td>
-      <td>{{ flag.detail }}</td>
-      <td>
-        {% if flag.is_resolved %}
-        <span class="badge badge--resolved">{{ flag.override_reason }}</span>
-        {% else %}
-        <span class="muted">—</span>
-        {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<ul class="card-list">
+  {% for flag in merged_job.flags %}
+  <li class="item-card {% if flag.is_resolved %}flag-row--resolved{% else %}flag-row--unresolved{% endif %}">
+    <div class="item-card__header">
+      <span class="item-card__title"><code>{{ flag.ap_name }}</code></span>
+      <span class="badge">{{ flag_type_label(flag.type) }}</span>
+    </div>
+    {% include "partials/jobs/flag_detail.html" %}
+    {% if flag.is_resolved %}
+    <p><span class="badge badge--resolved">{{ flag.override_reason }}</span></p>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
 {% else %}
 <p class="muted">Fix photos or survey inputs and push merge again to clear flags, or select
 flags below and apply an override reason when the issue cannot be fixed.</p>
@@ -110,25 +102,20 @@ flags below and apply an override reason when the issue cannot be fixed.</p>
     {% endif %}
     <button type="submit">Apply to selected</button>
   </div>
-  <table class="table flag-table">
-    <thead>
-      <tr>
-        <th class="flag-col-select">
-          <input type="checkbox"
-                 id="flag-select-all"
-                 title="Select all unresolved"
-                 aria-label="Select all unresolved flags">
-        </th>
-        <th>AP name</th>
-        <th>Type</th>
-        <th>Detail</th>
-        <th>Override reason</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for flag in merged_job.flags %}
-      <tr class="{% if flag.is_resolved %}flag-row--resolved{% else %}flag-row--unresolved{% endif %}">
-        <td class="flag-col-select">
+  <div class="flag-select-all-row">
+    <label class="flag-select-all-label">
+      <input type="checkbox"
+             id="flag-select-all"
+             title="Select all unresolved"
+             aria-label="Select all unresolved flags">
+      Select all unresolved
+    </label>
+  </div>
+  <ul class="card-list">
+    {% for flag in merged_job.flags %}
+    <li class="item-card {% if flag.is_resolved %}flag-row--resolved{% else %}flag-row--unresolved{% endif %}">
+      <div class="item-card__header">
+        <label class="flag-card-select">
           {% if flag.is_resolved %}
           <input type="checkbox" disabled aria-label="Resolved">
           {% else %}
@@ -138,21 +125,17 @@ flags below and apply an override reason when the issue cannot be fixed.</p>
                  class="flag-row-checkbox"
                  aria-label="Select flag for {{ flag.ap_name }}">
           {% endif %}
-        </td>
-        <td><code>{{ flag.ap_name }}</code></td>
-        <td>{% if not flag.is_resolved %}<strong>{% endif %}{{ flag_type_label(flag.type) }}{% if not flag.is_resolved %}</strong>{% endif %}</td>
-        <td>{{ flag.detail }}</td>
-        <td>
-          {% if flag.is_resolved %}
-          <span class="badge badge--resolved">{{ flag.override_reason }}</span>
-          {% else %}
-          <span class="muted">—</span>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+          <span class="item-card__title"><code>{{ flag.ap_name }}</code></span>
+        </label>
+        <span class="badge">{% if not flag.is_resolved %}<strong>{% endif %}{{ flag_type_label(flag.type) }}{% if not flag.is_resolved %}</strong>{% endif %}</span>
+      </div>
+      {% include "partials/jobs/flag_detail.html" %}
+      {% if flag.is_resolved %}
+      <p><span class="badge badge--resolved">{{ flag.override_reason }}</span></p>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
 </form>
 <script>
 (function () {

@@ -1,0 +1,23 @@
+{% if photo_upload_error %}
+<p class="error">{{ photo_upload_error }}</p>
+{% endif %}
+{% if job.photos %}
+<ul class="capture-photo-list">
+  {% for p in job.photos %}
+  <li>
+    <code>{{ p.ap_name }}</code> — {{ p.shot_type.value }}
+    <span class="muted">({{ p.original_filename }})</span>
+    {% if not job_locked %}
+    <button type="button"
+            class="btn-remove"
+            hx-delete="/jobs/{{ job.id }}/photos/{{ p.id }}"
+            hx-target="#capture-photos-list"
+            hx-swap="innerHTML"
+            hx-confirm="Remove this {{ p.shot_type.value }} photo for {{ p.ap_name }}?">Remove</button>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="muted">No photos uploaded yet.</p>
+{% endif %}

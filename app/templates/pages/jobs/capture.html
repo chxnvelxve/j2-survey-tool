@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Capture — {{ job.name }}{% endblock %}
+
+{% block content %}
+<div class="capture-page">
+  <h2>{{ job.name }}</h2>
+  <p>
+    <a href="/jobs/{{ job.id }}">&larr; Job detail</a>
+    &middot;
+    Status: <span class="badge">{{ job_status_label(job.status) }}</span>
+  </p>
+
+  {% if job_locked %}
+  <p class="muted">This job is approved — capture is read-only.</p>
+  {% endif %}
+
+  <section class="upload-section">
+    <h3>Job settings</h3>
+    <div id="capture-settings">
+      {% include "partials/jobs/capture_settings.html" %}
+    </div>
+  </section>
+
+  <section class="upload-section">
+    <h3>AP photos</h3>
+    {% if not job_locked %}
+    <p class="muted">
+      {% if ap_names %}
+      Pick an AP name from the list (exact match). Free-text is allowed if the survey
+      is not uploaded yet.
+      {% else %}
+      No parsed survey yet — type the AP name. Upload still works; names will be
+      checked at merge.
+      {% endif %}
+    </p>
+
+    <label class="capture-label">
+      AP name
+      <input type="text"
+             id="ap-name-input"
+             name="ap_name"
+             class="touch-target"
+             list="ap-names"
+             maxlength="255"
+             required
+             autocomplete="off"
+             placeholder="{% if ap_names %}Select or type AP name{% else %}e.g. AP-01-NE{% endif %}"
+             title="Must match survey AP name exactly when a survey is present">
+    </label>
+    <datalist id="ap-names">
+      {% for name in ap_names %}
+      <option value="{{ name }}"></option>
+      {% endfor %}
+    </datalist>
+    <p id="ap-mismatch-hint" class="hint" hidden>
+      No match yet — will flag at merge
+    </p>
+    <p id="ap-no-survey-hint" class="muted"{% if ap_names %} hidden{% endif %}>
+      No survey parsed yet — free-text only.
+    </p>
+
+    <script type="application/json" id="ap-names-json">{{ ap_names | tojson }}</script>
+
+    <div class="capture-slots">
+      <form class="capture-slot"
+            hx-post="/jobs/{{ job.id }}/photos"
+            hx-target="#capture-photos-list"
+            hx-swap="innerHTML"
+            hx-encoding="multipart/form-data"
+            hx-include="#ap-name-input">
+        <h4>Close</h4>
+        <input type="hidden" name="shot_type" value="close">
+        <input type="file" name="file" accept="image/*" capture="environment" required class="touch-target">
+        <button type="submit" class="touch-target">Upload close</button>
+      </form>
+
+      <form class="capture-slot"
+            hx-post="/jobs/{{ job.id }}/photos"
+            hx-target="#capture-photos-list"
+            hx-swap="innerHTML"
+            hx-encoding="multipart/form-data"
+            hx-include="#ap-name-input">
+        <h4>Far</h4>
+        <input type="hidden" name="shot_type" value="far">
+        <input type="file" name="file" accept="image/*" capture="environment" required class="touch-target">
+        <button type="submit" class="touch-target">Upload far</button>
+      </form>
+    </div>
+    {% endif %}
+
+    <div id="capture-photos-list">
+      {% include "partials/jobs/capture_photos.html" %}
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var input = document.getElementById("ap-name-input");
+  var hint = document.getElementById("ap-mismatch-hint");
+  var jsonEl = document.getElementById("ap-names-json");
+  if (!input || !hint || !jsonEl) return;
+  var names;
+  try {
+    names = JSON.parse(jsonEl.textContent || "[]");
+  } catch (e) {
+    names = [];
+  }
+  if (!names.length) return;
+  var set = {};
+  for (var i = 0; i < names.length; i++) set[names[i]] = true;
+  function update() {
+    var v = input.value;
+    hint.hidden = !v || !!set[v];
+  }
+  input.addEventListener("input", update);
+  input.addEventListener("change", update);
+  update();
+})();
+</script>
+{% endblock %}

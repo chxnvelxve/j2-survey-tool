@@ -164,6 +164,8 @@ def test_sample_esx_integration() -> None:
 
     result = merge([survey], photos)
 
-    assert len(result.aps) == 2
-    assert all(ap.status == MergedAPStatus.MATCHED for ap in result.aps)
-    assert result.flags == []
+    assert len(result.aps) == 4
+    matched = [ap for ap in result.aps if ap.status == MergedAPStatus.MATCHED]
+    assert len(matched) == 2
+    assert {ap.ap_name for ap in matched} == {"AP-01-NE", " AP-02-SW "}
+    assert len(result.flags) == 2

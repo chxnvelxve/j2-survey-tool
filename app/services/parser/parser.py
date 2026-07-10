@@ -9,6 +9,7 @@ Re-run debug recipe when real file arrives:
 from __future__ import annotations
 
 import json
+import logging
 import tempfile
 import zipfile
 from io import BytesIO
@@ -23,8 +24,10 @@ from app.schemas.survey import (
     SurveyRadio,
 )
 from app.services.parser.errors import ParseError
+from app.services.parser.schema_guard import detect_and_validate
 
-_REQUIRED_JSON = ("project.json", "floorPlans.json", "accessPoints.json")
+logger = logging.getLogger(__name__)
+
 _OPTIONAL_JSON = ("simulatedRadios.json", "measuredRadios.json")
 
 
@@ -87,8 +90,19 @@ def _parse_floors(data: list[Any], *, source_name: str) -> list[SurveyFloor]:
                 f"floorPlans.json[{idx}] key 'image'/'imageRef' must be a string",
                 source_name=source_name,
             )
+        heatmap_ref = _first_key(item, "heatmap", "heatmapRef")
+        if heatmap_ref is not None and not isinstance(heatmap_ref, str):
+            raise ParseError(
+                f"floorPlans.json[{idx}] key 'heatmap'/'heatmapRef' must be a string",
+                source_name=source_name,
+            )
         floors.append(
-            SurveyFloor(id=floor_id, name=floor_name, image_ref=image_ref),
+            SurveyFloor(
+                id=floor_id,
+                name=floor_name,
+                image_ref=image_ref,
+                heatmap_ref=heatmap_ref,
+            ),
         )
     return floors
 
@@ -208,9 +222,8 @@ def _parse_aps(
 
 
 def _parse_extracted_dir(extract_dir: Path, *, source_name: str) -> SurveyModel:
-    for filename in _REQUIRED_JSON:
-        if not (extract_dir / filename).is_file():
-            raise ParseError(f"Missing required file {filename}", source_name=source_name)
+    fingerprint = detect_and_validate(extract_dir, source_name=source_name)
+    logger.info("%s: matched esx schema profile %s", source_name, fingerprint)
 
     project_raw = _read_json(extract_dir / "project.json")
     floors_raw = _read_json(extract_dir / "floorPlans.json")

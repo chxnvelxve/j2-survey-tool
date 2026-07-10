@@ -10,6 +10,7 @@ class SurveyFloor(BaseModel):
     id: str
     name: str
     image_ref: str | None = None
+    heatmap_ref: str | None = None
 
 
 class SurveyRadio(BaseModel):

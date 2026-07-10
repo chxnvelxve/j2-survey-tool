@@ -34,6 +34,7 @@ from app.services.job_generate import (
 )
 from app.services.job_merge import merged_job_from_snapshot, push_job_merge
 from app.services.jobs import (
+    InvalidPhotoApNameError,
     InvalidSurveyFileError,
     JobFileNotFoundError,
     JobLockedError,
@@ -430,7 +431,7 @@ async def jobs_upload_photo(
     use_capture = partial.endswith("capture_photos.html")
     try:
         upload_photo(db, storage, job, file, ap_name, shot_type)
-    except JobLockedError as exc:
+    except (JobLockedError, InvalidPhotoApNameError) as exc:
         ctx = (
             _capture_context(db, storage, job_id)
             if use_capture

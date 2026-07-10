@@ -35,6 +35,10 @@ class JobLockedError(Exception):
     """Job is approved; mutating operations are not allowed."""
 
 
+class InvalidPhotoApNameError(Exception):
+    """Raised when a photo upload has a blank or whitespace-only AP name."""
+
+
 def job_is_locked(job: Job) -> bool:
     return job.status == JobStatus.APPROVED
 
@@ -178,6 +182,10 @@ def upload_photo(
     shot_type: PhotoShotType,
 ) -> Photo:
     _ensure_not_locked(job)
+    if not ap_name or not ap_name.strip():
+        raise InvalidPhotoApNameError(
+            "AP name is required — pick from the list or type the exact survey name.",
+        )
     filename = upload.filename or "photo.jpg"
     size_bytes = _file_size(upload.file)
     subdir_name = f"photos/{ap_name.strip()}_{shot_type.value}"

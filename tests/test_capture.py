@@ -5,10 +5,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from app.models.enums import JobStatus
+from app.models.enums import JobStatus, PhotoShotType
 from app.schemas.job import JobSettingsUpdate
 from app.schemas.survey import ParsedSurveyFile, SurveyAP, SurveyModel, SurveyProject
-from app.services.jobs import JobLockedError, update_job_settings
+from app.services.jobs import (
+    InvalidPhotoApNameError,
+    JobLockedError,
+    update_job_settings,
+    upload_photo,
+)
 from app.services.survey_parse import flatten_ap_names
 
 
@@ -110,4 +115,20 @@ def test_update_job_settings_locked() -> None:
             job,
             JobSettingsUpdate(survey_type="x"),
         )
+    db.commit.assert_not_called()
+
+
+@pytest.mark.parametrize("ap_name", ["", "   ", "\t"])
+def test_upload_photo_rejects_blank_ap_name(ap_name: str) -> None:
+    job = MagicMock()
+    job.status = JobStatus.INPUTS_UPLOADED
+    db = MagicMock()
+    storage = MagicMock()
+    upload = MagicMock()
+    upload.filename = "shot.jpg"
+
+    with pytest.raises(InvalidPhotoApNameError, match="AP name is required"):
+        upload_photo(db, storage, job, upload, ap_name, PhotoShotType.CLOSE)
+
+    storage.save.assert_not_called()
     db.commit.assert_not_called()

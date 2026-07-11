@@ -2,12 +2,14 @@
 See .cursor/skills/docx-generator/SKILL.md.
 
 Phase 5. docxtpl. Branding from config, never hardcoded.
+Phase 9: success-criteria profiles + expanded context contract.
 """
 from __future__ import annotations
 
 from collections.abc import Callable
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 
 from docxtpl import DocxTemplate
 
@@ -52,6 +54,11 @@ def generate_docx(
     floor_name_for: Callable[[str | None], str],
     photo_paths: dict[int, Path],
     attachments: list[AttachmentInput],
+    location_vertical: str | None = None,
+    success_criteria_override: dict[str, Any] | None = None,
+    survey_type: str | None = None,
+    band_plan: str | None = None,
+    site_metadata: str | None = None,
 ) -> bytes:
     """Validate, build context, render docxtpl, return .docx bytes."""
     _validate_inputs(merged, template_path, attachments)
@@ -66,6 +73,11 @@ def generate_docx(
         floor_name_for=floor_name_for,
         photo_paths=photo_paths,
         attachments=attachments,
+        location_vertical=location_vertical,
+        success_criteria_override=success_criteria_override,
+        survey_type=survey_type,
+        band_plan=band_plan,
+        site_metadata=site_metadata,
     )
     tpl.render(context)
 

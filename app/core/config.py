@@ -24,9 +24,10 @@ class Settings(BaseSettings):
     NEXTCLOUD_WEBDAV_ROOT: str = ""
 
     # Branding — kept OUT of engine code so the tool re-skins per client.
+    # 🟡 Phase 9 sample defaults — swap real J2 assets/hex on activation.
     BRAND_COMPANY_NAME: str = "J2 Communications"
-    BRAND_LOGO_PATH: str = ""
-    BRAND_PRIMARY_COLOR: str = "#0B3D91"
+    BRAND_LOGO_PATH: str = "branding/j2_logo_placeholder.png"
+    BRAND_PRIMARY_COLOR: str = "#1F4E79"
 
     DOCX_TEMPLATE_PATH: str = "/app/templates_docx/survey_report.docx"
 

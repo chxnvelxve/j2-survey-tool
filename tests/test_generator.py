@@ -87,11 +87,22 @@ def _attachments(tmp_path: Path) -> list[AttachmentInput]:
     ]
 
 
+SECTION_HEADINGS = (
+    "Executive Summary",
+    "Scope / Methodology",
+    "Success Criteria",
+    "Findings",
+    "AP Inventory",
+    "Issues & Gaps",
+    "Appendices",
+)
+
+
 def _branding() -> BrandingConfig:
     return BrandingConfig(
         company_name="Test Survey Co",
         logo_path=None,
-        primary_color="#0B3D91",
+        primary_color="#1F4E79",
     )
 
 
@@ -107,6 +118,10 @@ def test_generate_docx_happy_path(tmp_path: Path) -> None:
         floor_name_for=lambda _fid: "Floor 1",
         photo_paths={1: PHOTO_CLOSE, 2: PHOTO_FAR},
         attachments=_attachments(tmp_path),
+        location_vertical="warehouse",
+        survey_type="validation",
+        band_plan="5GHz primary",
+        site_metadata="Building A",
     )
 
     out = tmp_path / "out.docx"
@@ -118,6 +133,13 @@ def test_generate_docx_happy_path(tmp_path: Path) -> None:
     assert "AP-01-NE" in text
     assert "Ceiling access denied" in text
     assert "Test Survey Co" in text
+    for heading in SECTION_HEADINGS:
+        assert heading in text, f"Missing section heading: {heading}"
+    assert "Warehouse" in text
+    assert "-67" in text
+    assert "144" in text
+    assert "validation" in text
+    assert "Building A" in text
 
 
 def test_unresolved_flags_error(tmp_path: Path) -> None:

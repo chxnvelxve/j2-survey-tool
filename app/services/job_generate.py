@@ -154,6 +154,11 @@ def generate_job_report(db: Session, storage: Storage, job: Job) -> str:
             floor_name_for=floor_name_for_id,
             photo_paths=_photo_paths(job, storage),
             attachments=_attachment_inputs(job, storage),
+            location_vertical=job.location_vertical,
+            success_criteria_override=job.success_criteria_override,
+            survey_type=job.survey_type,
+            band_plan=job.band_plan,
+            site_metadata=job.site_metadata,
         )
     except GeneratorError:
         raise

@@ -53,6 +53,8 @@ class Job(Base):
     location_vertical: Mapped[str | None] = mapped_column(String(255), nullable=True)
     band_plan: Mapped[str | None] = mapped_column(String(255), nullable=True)
     site_metadata: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    # Per-job threshold override (Phase 9). Wins over profiles lookup when set.
+    success_criteria_override: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     survey_files: Mapped[list["SurveyFile"]] = relationship(
         back_populates="job",

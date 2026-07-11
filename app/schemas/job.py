@@ -79,6 +79,7 @@ class JobRead(BaseModel):
     location_vertical: str | None = None
     band_plan: str | None = None
     site_metadata: str | None = None
+    success_criteria_override: dict | None = None
     survey_files: list[SurveyFileRead] = Field(default_factory=list)
     photos: list[PhotoRead] = Field(default_factory=list)
     attachments: list[AttachmentRead] = Field(default_factory=list)

@@ -1,8 +1,13 @@
-"""Build docxtpl Jinja context from MergedJob and resolved assets."""
+"""Build docxtpl Jinja context from MergedJob and resolved assets.
+
+Frozen context contract — see docs/template_map.md. Contract test fails if
+documented keys disappear.
+"""
 from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from docx.shared import Mm
 from docxtpl import DocxTemplate, InlineImage
@@ -10,10 +15,28 @@ from docxtpl import DocxTemplate, InlineImage
 from app.schemas.merge import FLAG_TYPE_LABELS, MergedJob, MergedPhotoRef
 from app.schemas.survey import SurveyRadio
 from app.services.generator.errors import MissingPhotoFileError
+from app.services.generator.profiles import SuccessCriteria, resolve_profile
 from app.services.generator.types import AttachmentInput, BrandingConfig
 
 PHOTO_WIDTH = Mm(55)
 LOGO_WIDTH = Mm(40)
+
+# 🟡 DRAFTED placeholders until Josh's sample deliverable arrives.
+_EXEC_SUMMARY_PLACEHOLDER = (
+    "This report documents wireless access point installation and survey results "
+    "for the site named above. Detailed RF configuration and field photos follow. "
+    "(Placeholder text — replace when Josh's sample deliverable arrives.)"
+)
+_SCOPE_METHODOLOGY_PLACEHOLDER = (
+    "Survey scope and methodology will be drafted by the editor. "
+    "Capture settings below are machine-fed from the job record. "
+    "(Placeholder — replace when Josh's sample deliverable arrives.)"
+)
+_FINDINGS_PLACEHOLDER = (
+    "Findings narrative will be drafted by the editor after reviewing survey "
+    "data and field photos. Summary counts below are machine-fed. "
+    "(Placeholder — RF pass/fail math is not computed in v1 shell.)"
+)
 
 
 def _radio_label(radio: SurveyRadio) -> str:
@@ -40,6 +63,12 @@ def _resolve_photo(
     return InlineImage(tpl, str(path), width=PHOTO_WIDTH), ref.original_filename
 
 
+def _blank(value: str | None) -> str:
+    if value is None or not str(value).strip():
+        return "—"
+    return str(value).strip()
+
+
 def build_template_context(
     tpl: DocxTemplate,
     merged: MergedJob,
@@ -50,10 +79,20 @@ def build_template_context(
     floor_name_for: Callable[[str | None], str],
     photo_paths: dict[int, Path],
     attachments: list[AttachmentInput],
+    location_vertical: str | None = None,
+    success_criteria_override: dict[str, Any] | None = None,
+    survey_type: str | None = None,
+    band_plan: str | None = None,
+    site_metadata: str | None = None,
 ) -> dict[str, object]:
     logo: InlineImage | None = None
     if branding.logo_path is not None and branding.logo_path.is_file():
         logo = InlineImage(tpl, str(branding.logo_path), width=LOGO_WIDTH)
+
+    criteria: SuccessCriteria = resolve_profile(
+        location_vertical,
+        success_criteria_override,
+    )
 
     aps: list[dict[str, object]] = []
     for ap in sorted(merged.aps, key=lambda row: row.ap_name):
@@ -113,12 +152,25 @@ def build_template_context(
             },
         )
 
+    ap_count = len(aps)
+    override_count = len(overrides)
+
     return {
         "company_name": branding.company_name,
         "primary_color": branding.primary_color,
         "logo": logo,
         "job_name": job_name,
         "project_name": project_name,
+        "survey_type": _blank(survey_type),
+        "location_vertical": _blank(location_vertical),
+        "band_plan": _blank(band_plan),
+        "site_metadata": _blank(site_metadata),
+        "success_criteria": criteria.as_context(),
+        "exec_summary": _EXEC_SUMMARY_PLACEHOLDER,
+        "scope_methodology": _SCOPE_METHODOLOGY_PLACEHOLDER,
+        "findings": _FINDINGS_PLACEHOLDER,
+        "ap_count": ap_count,
+        "override_count": override_count,
         "aps": aps,
         "attachments": attachment_rows,
         "overrides": overrides,

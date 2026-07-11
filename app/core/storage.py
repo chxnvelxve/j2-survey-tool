@@ -1,14 +1,26 @@
-"""Storage abstraction. LocalStorage now; NextcloudStorage later — same interface.
+"""Storage abstraction. LocalStorage default; NextcloudStorage via WebDAV.
 
 NEVER call open()/build paths outside this module. All file IO goes through Storage.
 """
 from __future__ import annotations
 
 import shutil
-from pathlib import Path
+import tempfile
+from io import BytesIO
+from pathlib import Path, PurePosixPath
 from typing import BinaryIO, Protocol
+from urllib.parse import quote
+
+import httpx
 
 from app.core.config import settings
+
+_MISSING_CREDS_MSG = (
+    "STORAGE_BACKEND=nextcloud requires NEXTCLOUD_URL, NEXTCLOUD_USERNAME, "
+    "and NEXTCLOUD_PASSWORD. Set those env vars, or use STORAGE_BACKEND=local. "
+    "Do not fall back silently — a misconfigured production deploy must fail loudly. "
+    "Live activation waits on Nextcloud access from Josh (docs/DECISIONS.md #12)."
+)
 
 
 class StorageNotConfiguredError(Exception):
@@ -52,14 +64,120 @@ class LocalStorage:
 
 
 class NextcloudStorage:
-    """Stub — full WebDAV impl blocked on Josh (docs/DECISIONS.md #12)."""
+    """WebDAV-backed storage against a Nextcloud instance.
 
-    def __init__(self) -> None:
-        raise StorageNotConfiguredError(
-            "Nextcloud storage is not configured. "
-            "Waiting on Nextcloud access from Josh (docs/DECISIONS.md #12). "
-            "Set STORAGE_BACKEND=local for now.",
+    Shell is buildable now; live creds activation is blocked on Josh (#12).
+    """
+
+    def __init__(
+        self,
+        *,
+        base_url: str | None = None,
+        username: str | None = None,
+        password: str | None = None,
+        webdav_root: str | None = None,
+        client: httpx.Client | None = None,
+    ) -> None:
+        url = (base_url if base_url is not None else settings.NEXTCLOUD_URL).strip()
+        user = (username if username is not None else settings.NEXTCLOUD_USERNAME).strip()
+        pwd = (password if password is not None else settings.NEXTCLOUD_PASSWORD).strip()
+        root = (
+            webdav_root
+            if webdav_root is not None
+            else settings.NEXTCLOUD_WEBDAV_ROOT
+        ).strip().strip("/")
+
+        if not url or not user or not pwd:
+            raise StorageNotConfiguredError(_MISSING_CREDS_MSG)
+
+        self._base_url = url.rstrip("/")
+        self._username = user
+        self._password = pwd
+        self._webdav_root = root
+        self._owns_client = client is None
+        self._client = client or httpx.Client(
+            auth=(user, pwd),
+            timeout=60.0,
         )
+
+    def close(self) -> None:
+        if self._owns_client:
+            self._client.close()
+
+    def __enter__(self) -> NextcloudStorage:
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        self.close()
+
+    def _dav_prefix(self) -> str:
+        user_seg = quote(self._username, safe="")
+        prefix = f"{self._base_url}/remote.php/dav/files/{user_seg}"
+        if self._webdav_root:
+            root_segs = "/".join(
+                quote(part, safe="") for part in PurePosixPath(self._webdav_root).parts
+            )
+            return f"{prefix}/{root_segs}"
+        return prefix
+
+    def _object_url(self, rel_path: str) -> str:
+        cleaned = rel_path.replace("\\", "/").lstrip("/")
+        if not cleaned:
+            raise ValueError("rel_path must not be empty")
+        segs = "/".join(quote(part, safe="") for part in PurePosixPath(cleaned).parts)
+        return f"{self._dav_prefix()}/{segs}"
+
+    def url_for(self, rel_path: str) -> str:
+        return self._object_url(rel_path)
+
+    def _ensure_parent_collections(self, rel_path: str) -> None:
+        cleaned = rel_path.replace("\\", "/").lstrip("/")
+        parent = PurePosixPath(cleaned).parent
+        if str(parent) in (".", ""):
+            return
+        cumulative: list[str] = []
+        for part in parent.parts:
+            cumulative.append(part)
+            col_path = "/".join(cumulative)
+            url = self._object_url(col_path)
+            response = self._client.request("MKCOL", url)
+            # 201 created; 405 already exists; 409 parent missing (shouldn't if ordered)
+            if response.status_code in (201, 405, 301, 302):
+                continue
+            if response.status_code == 409:
+                continue
+            response.raise_for_status()
+
+    def save(self, rel_path: str, fileobj: BinaryIO) -> str:
+        self._ensure_parent_collections(rel_path)
+        data = fileobj.read()
+        response = self._client.put(self._object_url(rel_path), content=data)
+        response.raise_for_status()
+        return rel_path
+
+    def open(self, rel_path: str) -> BinaryIO:
+        response = self._client.get(self._object_url(rel_path))
+        if response.status_code == 404:
+            raise FileNotFoundError(f"Nextcloud object not found: {rel_path}")
+        response.raise_for_status()
+        return BytesIO(response.content)
+
+    def delete(self, rel_path: str) -> None:
+        response = self._client.delete(self._object_url(rel_path))
+        if response.status_code == 404:
+            return
+        response.raise_for_status()
+
+    def filesystem_path(self, rel_path: str) -> Path:
+        with self.open(rel_path) as handle:
+            data = handle.read()
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=Path(rel_path).suffix)
+        try:
+            tmp.write(data)
+            tmp.flush()
+        finally:
+            tmp.close()
+        return Path(tmp.name)
 
 
 def get_storage() -> Storage:

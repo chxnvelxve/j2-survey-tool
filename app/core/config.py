@@ -17,7 +17,8 @@ class Settings(BaseSettings):
     STORAGE_BACKEND: str = "local"
     STORAGE_LOCAL_ROOT: str = "/app/storage"
 
-    # Nextcloud — blocked on Josh (#12); stub raises if STORAGE_BACKEND=nextcloud.
+    # Nextcloud WebDAV — shell implemented; live activation blocked on Josh (#12).
+    # STORAGE_BACKEND=nextcloud requires URL + USERNAME + PASSWORD (no silent local fallback).
     NEXTCLOUD_URL: str = ""
     NEXTCLOUD_USERNAME: str = ""
     NEXTCLOUD_PASSWORD: str = ""

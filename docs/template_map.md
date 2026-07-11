@@ -4,7 +4,7 @@ Frozen contract for `templates_docx/survey_report.docx`. Generator emits these
 keys from `app/services/generator/context.py`. The contract test
 (`tests/test_context_contract.py`) fails if a documented key disappears.
 
-**AUTO** = machine-fed from Job / MergedJob / branding.  
+**AUTO** = machine-fed from Job / MergedJob / branding.
 **DRAFTED** = human-written placeholder string until Josh's sample deliverable
 arrives (🔒 activation).
 
@@ -50,7 +50,7 @@ Legend: 🟡 sample / placeholder · 🔒 blocked on Josh
 | `success_criteria.max_co_channel_aps` | Threshold 🟡 |
 | `success_criteria.is_override` | True when Job.success_criteria_override applied |
 
-Lookup: `app/services/generator/profiles.py` via `Job.location_vertical`.  
+Lookup: `app/services/generator/profiles.py` via `Job.location_vertical`.
 Per-job `success_criteria_override` JSON wins field-by-field when set.
 
 ## 5. Findings — DRAFTED (+ AUTO counts)

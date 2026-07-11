@@ -13,7 +13,19 @@ from app.core.storage import (
     NextcloudStorage,
     StorageNotConfiguredError,
     get_storage,
+    validate_rel_path,
 )
+
+REJECTED_PATHS = [
+    "",
+    "   ",
+    "/etc/passwd",
+    "C:/Windows/system32",
+    "jobs/1/../other.bin",
+    "jobs/./secret.bin",
+    "../escape.bin",
+    "jobs/1/../../etc/passwd",
+]
 
 BASE = "https://nextcloud.example.com"
 USER = "survey-bot"
@@ -148,3 +160,52 @@ def test_get_storage_nextcloud_missing_creds() -> None:
         mock_settings.NEXTCLOUD_WEBDAV_ROOT = ""
         with pytest.raises(StorageNotConfiguredError):
             get_storage()
+
+
+@pytest.mark.parametrize("bad_path", REJECTED_PATHS)
+def test_validate_rel_path_rejects(bad_path: str) -> None:
+    with pytest.raises(ValueError):
+        validate_rel_path(bad_path)
+
+
+def test_validate_rel_path_accepts_normal() -> None:
+    assert validate_rel_path("jobs/1/output/report.docx") == "jobs/1/output/report.docx"
+    assert validate_rel_path(r"jobs\1\photo.jpg") == "jobs/1/photo.jpg"
+
+
+@pytest.mark.parametrize("bad_path", REJECTED_PATHS)
+def test_local_storage_rejects_bad_paths(tmp_path, bad_path: str) -> None:
+    storage = LocalStorage(root=str(tmp_path))
+    with pytest.raises(ValueError):
+        storage.url_for(bad_path)
+    with pytest.raises(ValueError):
+        storage.filesystem_path(bad_path)
+    with pytest.raises(ValueError):
+        storage.open(bad_path)
+    with pytest.raises(ValueError):
+        storage.save(bad_path, BytesIO(b"x"))
+    with pytest.raises(ValueError):
+        storage.delete(bad_path)
+
+
+@pytest.mark.parametrize(
+    "bad_path",
+    [
+        "jobs/1/../other.bin",
+        "/etc/passwd",
+        "jobs/./secret.bin",
+        "",
+    ],
+)
+def test_nextcloud_storage_rejects_bad_paths(bad_path: str) -> None:
+    storage = _storage()
+    with pytest.raises(ValueError):
+        storage.url_for(bad_path)
+    with pytest.raises(ValueError):
+        storage.open(bad_path)
+    with pytest.raises(ValueError):
+        storage.save(bad_path, BytesIO(b"x"))
+    with pytest.raises(ValueError):
+        storage.delete(bad_path)
+    with pytest.raises(ValueError):
+        storage.filesystem_path(bad_path)

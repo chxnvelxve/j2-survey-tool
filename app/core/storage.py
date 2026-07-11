@@ -35,11 +35,49 @@ class Storage(Protocol):
     def filesystem_path(self, rel_path: str) -> Path: ...
 
 
+def validate_rel_path(rel_path: str) -> str:
+    """Normalize and reject empty, absolute, dot-segment, and parent-traversal paths.
+
+    Returns a cleaned relative path using forward slashes.
+    Splits manually (does not use Path normalization) so ``.`` / ``..`` are caught.
+    """
+    if rel_path is None or not str(rel_path).strip():
+        raise ValueError("rel_path must not be empty")
+
+    raw = str(rel_path).replace("\\", "/").strip()
+    if raw.startswith("/") or raw.startswith("~"):
+        raise ValueError(f"rel_path must be relative, not absolute: {rel_path!r}")
+    # Windows drive / UNC
+    if len(raw) >= 2 and raw[1] == ":":
+        raise ValueError(f"rel_path must be relative, not absolute: {rel_path!r}")
+    if raw.startswith("//"):
+        raise ValueError(f"rel_path must be relative, not absolute: {rel_path!r}")
+
+    parts = raw.split("/")
+    if not parts or all(p == "" for p in parts):
+        raise ValueError("rel_path must not be empty")
+    cleaned: list[str] = []
+    for part in parts:
+        if part == "":
+            # Collapse duplicate slashes; do not treat as a segment.
+            continue
+        if part in (".", ".."):
+            raise ValueError(
+                f"rel_path must not contain '.' or '..' segments: {rel_path!r}",
+            )
+        cleaned.append(part)
+
+    if not cleaned:
+        raise ValueError("rel_path must not be empty")
+    return "/".join(cleaned)
+
+
 class LocalStorage:
     def __init__(self, root: str | None = None) -> None:
         self.root = Path(root or settings.STORAGE_LOCAL_ROOT)
 
     def save(self, rel_path: str, fileobj: BinaryIO) -> str:
+        rel_path = validate_rel_path(rel_path)
         dest = self.root / rel_path
         dest.parent.mkdir(parents=True, exist_ok=True)
         with dest.open("wb") as out:
@@ -47,12 +85,15 @@ class LocalStorage:
         return rel_path
 
     def open(self, rel_path: str) -> BinaryIO:
+        rel_path = validate_rel_path(rel_path)
         return (self.root / rel_path).open("rb")
 
     def url_for(self, rel_path: str) -> str:
+        rel_path = validate_rel_path(rel_path)
         return f"/files/{rel_path}"
 
     def delete(self, rel_path: str) -> None:
+        rel_path = validate_rel_path(rel_path)
         path = self.root / rel_path
         try:
             path.unlink()
@@ -60,6 +101,7 @@ class LocalStorage:
             pass
 
     def filesystem_path(self, rel_path: str) -> Path:
+        rel_path = validate_rel_path(rel_path)
         return self.root / rel_path
 
 
@@ -121,9 +163,7 @@ class NextcloudStorage:
         return prefix
 
     def _object_url(self, rel_path: str) -> str:
-        cleaned = rel_path.replace("\\", "/").lstrip("/")
-        if not cleaned:
-            raise ValueError("rel_path must not be empty")
+        cleaned = validate_rel_path(rel_path)
         segs = "/".join(quote(part, safe="") for part in PurePosixPath(cleaned).parts)
         return f"{self._dav_prefix()}/{segs}"
 
@@ -131,7 +171,7 @@ class NextcloudStorage:
         return self._object_url(rel_path)
 
     def _ensure_parent_collections(self, rel_path: str) -> None:
-        cleaned = rel_path.replace("\\", "/").lstrip("/")
+        cleaned = validate_rel_path(rel_path)
         parent = PurePosixPath(cleaned).parent
         if str(parent) in (".", ""):
             return
@@ -149,6 +189,7 @@ class NextcloudStorage:
             response.raise_for_status()
 
     def save(self, rel_path: str, fileobj: BinaryIO) -> str:
+        rel_path = validate_rel_path(rel_path)
         self._ensure_parent_collections(rel_path)
         data = fileobj.read()
         response = self._client.put(self._object_url(rel_path), content=data)
@@ -156,6 +197,7 @@ class NextcloudStorage:
         return rel_path
 
     def open(self, rel_path: str) -> BinaryIO:
+        rel_path = validate_rel_path(rel_path)
         response = self._client.get(self._object_url(rel_path))
         if response.status_code == 404:
             raise FileNotFoundError(f"Nextcloud object not found: {rel_path}")
@@ -163,12 +205,14 @@ class NextcloudStorage:
         return BytesIO(response.content)
 
     def delete(self, rel_path: str) -> None:
+        rel_path = validate_rel_path(rel_path)
         response = self._client.delete(self._object_url(rel_path))
         if response.status_code == 404:
             return
         response.raise_for_status()
 
     def filesystem_path(self, rel_path: str) -> Path:
+        rel_path = validate_rel_path(rel_path)
         with self.open(rel_path) as handle:
             data = handle.read()
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=Path(rel_path).suffix)

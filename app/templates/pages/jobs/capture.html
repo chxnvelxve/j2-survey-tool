@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/_status.html" import job_status_badge with context %}
 
 {% block title %}Capture — {{ job.name }}{% endblock %}
 
@@ -8,7 +9,7 @@
   <p>
     <a href="/jobs/{{ job.id }}">&larr; Job detail</a>
     &middot;
-    Status: <span class="badge">{{ job_status_label(job.status) }}</span>
+    Status: {{ job_status_badge(job.status) }}
   </p>
 
   {% if job_locked %}
@@ -40,7 +41,7 @@
       <input type="text"
              id="ap-name-input"
              name="ap_name"
-             class="touch-target"
+             class="touch-target ap-id"
              list="ap-names"
              maxlength="255"
              required
@@ -72,7 +73,7 @@
         <h4>Close</h4>
         <input type="hidden" name="shot_type" value="close">
         <input type="file" name="file" accept="image/*" capture="environment" required class="touch-target">
-        <button type="submit" class="touch-target">Upload close</button>
+        <button type="submit" class="touch-target btn-accent">Upload close</button>
       </form>
 
       <form class="capture-slot"

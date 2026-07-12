@@ -3,7 +3,7 @@
   {% for a in job.attachments %}
   <li>
     {{ a.original_filename }}
-    <span class="muted">({{ a.uploaded_at.strftime("%Y-%m-%d %H:%M") }})</span>
+    <span class="muted tabular-nums">({{ a.uploaded_at.strftime("%Y-%m-%d %H:%M") }})</span>
     {% if not job_locked %}
     <button type="button"
             class="btn-remove"

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/_status.html" import status_token, job_status_badge with context %}
 
 {% block title %}Jobs{% endblock %}
 
@@ -9,11 +10,11 @@
 {% if jobs %}
 <ul class="card-list">
   {% for job in jobs %}
-  <li class="item-card">
+  <li class="item-card item-card--status-{{ status_token(job.status) }}">
     <a class="item-card__title" href="/jobs/{{ job.id }}">{{ job.name }}</a>
     <div class="item-card__meta">
-      <span class="badge">{{ job_status_label(job.status) }}</span>
-      <span class="muted">{{ job.created_at.strftime("%Y-%m-%d %H:%M") }}</span>
+      {{ job_status_badge(job.status) }}
+      <span class="muted tabular-nums">{{ job.created_at.strftime("%Y-%m-%d %H:%M") }}</span>
     </div>
   </li>
   {% endfor %}

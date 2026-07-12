@@ -135,6 +135,41 @@ header h1 {
   background: var(--status-warning-bg);
   color: var(--status-warning);
 }
+.badge--status-success { background: var(--status-success-bg); color: var(--status-success); }
+.badge--status-warning { background: var(--status-warning-bg); color: var(--status-warning); }
+.badge--status-error   { background: var(--status-error-bg);   color: var(--status-error); }
+.badge--status-info    { background: var(--status-info-bg);    color: var(--status-info); }
+.badge--status-neutral { background: var(--status-neutral-bg); color: var(--status-neutral); }
+
+/* Phase 14b — AP identifiers read as machine identifiers, not prose */
+.ap-id {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.02em;
+}
+
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* Jobs list — semantic status rail on the card itself */
+.item-card--status-success { border-left: 4px solid var(--status-success); }
+.item-card--status-warning { border-left: 4px solid var(--status-warning); }
+.item-card--status-error   { border-left: 4px solid var(--status-error); }
+.item-card--status-info    { border-left: 4px solid var(--status-info); }
+.item-card--status-neutral { border-left: 4px solid var(--status-neutral); }
+
+/* Button hierarchy — restrained: at most one accent CTA per page */
+.btn-accent {
+  background: var(--brand-accent);
+  color: var(--text-on-accent);
+  border: none;
+}
+.btn-accent:hover { background: var(--brand-accent-dark); opacity: 1; }
+.btn-secondary {
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+}
+.btn-secondary:hover { background: var(--surface-card); opacity: 1; }
 main {
   max-width: 40rem;
   padding: 0 var(--space-6) var(--space-6);

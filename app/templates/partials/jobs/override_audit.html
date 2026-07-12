@@ -3,7 +3,7 @@
   {% for row in overridden_flags %}
   <li class="item-card flag-row--resolved">
     <div class="item-card__header">
-      <span class="item-card__title"><code>{{ row.ap_name }}</code></span>
+      <span class="item-card__title"><code class="ap-id">{{ row.ap_name }}</code></span>
       <span class="badge">{{ row.type_label }}</span>
     </div>
     {% set detail = row.detail %}

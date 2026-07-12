@@ -1,4 +1,5 @@
-<span id="job-status" hx-swap-oob="innerHTML" class="badge">{{ job_status_label(job.status) }}</span>
+{% from "partials/_status.html" import job_status_badge with context %}
+<span id="job-status" hx-swap-oob="innerHTML">{{ job_status_badge(job.status) }}</span>
 {% if photo_upload_error %}
 <p class="error">{{ photo_upload_error }}</p>
 {% endif %}
@@ -6,9 +7,9 @@
 <ul>
   {% for p in job.photos %}
   <li>
-    <code>{{ p.ap_name }}</code> — {{ p.shot_type.value }}
+    <code class="ap-id">{{ p.ap_name }}</code> — {{ p.shot_type.value }}
     ({{ p.original_filename }})
-    <span class="muted">{{ p.uploaded_at.strftime("%Y-%m-%d %H:%M") }}</span>
+    <span class="muted tabular-nums">{{ p.uploaded_at.strftime("%Y-%m-%d %H:%M") }}</span>
     {% if not job_locked %}
     <button type="button"
             class="btn-remove"

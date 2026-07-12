@@ -1,10 +1,11 @@
+{% from "partials/_status.html" import job_status_badge with context %}
 <div id="review-section">
-  <span id="job-status" hx-swap-oob="innerHTML" class="badge">{{ job_status_label(job.status) }}</span>
+  <span id="job-status" hx-swap-oob="innerHTML">{{ job_status_badge(job.status) }}</span>
 
   {% if job.deliverable_path %}
   <p class="muted">
     {% if job.generated_at %}
-    Generated {{ job.generated_at.strftime('%Y-%m-%d %H:%M UTC') }}.
+    Generated <span class="tabular-nums">{{ job.generated_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>.
     {% endif %}
     <a href="/jobs/{{ job.id }}/download">Download report (.docx)</a>
   </p>
@@ -14,7 +15,7 @@
 
   {% if job.approved_at %}
   <p class="muted">
-    Approved {{ job.approved_at.strftime('%Y-%m-%d %H:%M UTC') }}
+    Approved <span class="tabular-nums">{{ job.approved_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
     {% if job.approved_by %}by {{ job.approved_by }}{% endif %}.
   </p>
   {% endif %}
@@ -52,6 +53,7 @@
       <input type="text" name="approved_by" maxlength="255" placeholder="Name or initials">
     </label>
     <button type="submit"
+            {% if job.status.value == 'draft_in_review' %}class="btn-accent"{% endif %}
             {% if not approve_ready %}disabled title="{{ approve_block_reason }}"{% endif %}>
       Approve
     </button>

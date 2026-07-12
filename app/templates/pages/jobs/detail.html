@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/_status.html" import job_status_badge with context %}
 
 {% block title %}{{ job.name }}{% endblock %}
 
@@ -9,7 +10,7 @@
   &middot;
   <a href="/jobs/{{ job.id }}/capture">Field capture</a>
   &middot;
-  Status: <span id="job-status" class="badge">{{ job_status_label(job.status) }}</span>
+  Status: <span id="job-status">{{ job_status_badge(job.status) }}</span>
 </p>
 
 {% if job_locked %}
@@ -59,7 +60,7 @@
         hx-encoding="multipart/form-data">
     <label>
       AP name
-      <input type="text" name="ap_name" required maxlength="255"
+      <input type="text" name="ap_name" required maxlength="255" class="ap-id"
              placeholder="AP-01-NE" title="Must match survey AP name exactly, including spaces">
     </label>
     <label>

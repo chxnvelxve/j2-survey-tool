@@ -14,7 +14,7 @@
     {% for ap in pf.survey.aps %}
     <li class="item-card">
       <div class="item-card__title">
-        <code>{{ ap.name }}</code>
+        <code class="ap-id">{{ ap.name }}</code>
         {% if ap.name != ap.name.strip() %}
         <span class="muted">(has extra spaces)</span>
         {% endif %}

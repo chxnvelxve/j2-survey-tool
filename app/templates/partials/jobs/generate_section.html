@@ -1,5 +1,6 @@
+{% from "partials/_status.html" import job_status_badge with context %}
 <div id="generate-section">
-  <span id="job-status" hx-swap-oob="innerHTML" class="badge">{{ job_status_label(job.status) }}</span>
+  <span id="job-status" hx-swap-oob="innerHTML">{{ job_status_badge(job.status) }}</span>
 
   <h4>Readiness</h4>
   <p class="muted">When all checks pass, click <strong>Generate report</strong> to advance to {{ job_status_label('draft_in_review') }}.</p>
@@ -11,7 +12,7 @@
       {{ generation_gate_label('flags_resolved') }}
     </li>
     <li class="{% if job.attachments %}checklist--ok{% else %}checklist--pending{% endif %}">
-      {{ generation_gate_label('attachments_present') }} ({{ job.attachments | length }})
+      {{ generation_gate_label('attachments_present') }} (<span class="tabular-nums">{{ job.attachments | length }}</span>)
     </li>
     <li class="{% if job.status.value in ['flags_resolved', 'draft_in_review'] %}checklist--ok{% else %}checklist--pending{% endif %}">
       {{ generation_gate_label('status_allows_generation') }}
@@ -27,6 +28,7 @@
         hx-target="#generate-section"
         hx-swap="outerHTML">
     <button type="submit"
+            {% if job.status.value != 'draft_in_review' %}class="btn-accent"{% endif %}
             {% if not generate_ready %}disabled title="{{ generate_block_reason }}"{% endif %}>
       {% if job.deliverable_path and job.status.value == 'draft_in_review' %}
       Regenerate report
@@ -46,7 +48,7 @@
   {% if job.deliverable_path %}
   <p class="muted">
   {% if job.generated_at %}
-    Generated {{ job.generated_at.strftime('%Y-%m-%d %H:%M UTC') }}.
+    Generated <span class="tabular-nums">{{ job.generated_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>.
   {% endif %}
     <a href="/jobs/{{ job.id }}/download">Download report (.docx)</a>
   </p>

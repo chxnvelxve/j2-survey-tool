@@ -4,7 +4,8 @@
 <p class="error">{{ merge_error }}</p>
 {% endif %}
 {% else %}
-<span id="job-status" hx-swap-oob="innerHTML" class="badge">{{ job_status_label(job.status) }}</span>
+{% from "partials/_status.html" import job_status_badge with context %}
+<span id="job-status" hx-swap-oob="innerHTML">{{ job_status_badge(job.status) }}</span>
 {% if merge_error %}
 <p class="error">{{ merge_error }}</p>
 {% endif %}
@@ -15,7 +16,7 @@
   {% for row in merged_job.aps %}
   <li class="item-card">
     <div class="item-card__header">
-      <span class="item-card__title"><code>{{ row.ap_name }}</code></span>
+      <span class="item-card__title"><code class="ap-id">{{ row.ap_name }}</code></span>
       <span class="badge">{{ row.status.value }}</span>
     </div>
     <dl class="item-card__fields">
@@ -63,7 +64,7 @@
   {% for flag in merged_job.flags %}
   <li class="item-card {% if flag.is_resolved %}flag-row--resolved{% else %}flag-row--unresolved{% endif %}">
     <div class="item-card__header">
-      <span class="item-card__title"><code>{{ flag.ap_name }}</code></span>
+      <span class="item-card__title"><code class="ap-id">{{ flag.ap_name }}</code></span>
       <span class="badge">{{ flag_type_label(flag.type) }}</span>
     </div>
     {% include "partials/jobs/flag_detail.html" %}
@@ -100,7 +101,7 @@ flags below and apply an override reason when the issue cannot be fixed.</p>
       {% endfor %}
     </datalist>
     {% endif %}
-    <button type="submit">Apply to selected</button>
+    <button type="submit" class="btn-secondary">Apply to selected</button>
   </div>
   <div class="flag-select-all-row">
     <label class="flag-select-all-label">
@@ -125,7 +126,7 @@ flags below and apply an override reason when the issue cannot be fixed.</p>
                  class="flag-row-checkbox"
                  aria-label="Select flag for {{ flag.ap_name }}">
           {% endif %}
-          <span class="item-card__title"><code>{{ flag.ap_name }}</code></span>
+          <span class="item-card__title"><code class="ap-id">{{ flag.ap_name }}</code></span>
         </label>
         <span class="badge">{% if not flag.is_resolved %}<strong>{% endif %}{{ flag_type_label(flag.type) }}{% if not flag.is_resolved %}</strong>{% endif %}</span>
       </div>

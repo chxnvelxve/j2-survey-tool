@@ -1,0 +1,19 @@
+{# Presentation-only status -> semantic token mapping (Phase 14b).
+   Mirrors the design-spec token table. No status logic lives here —
+   consumes job_status_label() text as-is; this only picks a color token. #}
+{% set _status_token = {
+  'awaiting_inputs': 'warning',
+  'inputs_uploaded': 'info',
+  'merged': 'error',
+  'flags_resolved': 'neutral',
+  'draft_in_review': 'info',
+  'approved': 'success',
+} %}
+
+{% macro status_token(status) -%}
+{{- _status_token.get(status.value if status.value is defined else status, 'neutral') -}}
+{%- endmacro %}
+
+{% macro job_status_badge(status) -%}
+<span class="badge badge--status-{{ status_token(status) }}">{{ job_status_label(status) }}</span>
+{%- endmacro %}

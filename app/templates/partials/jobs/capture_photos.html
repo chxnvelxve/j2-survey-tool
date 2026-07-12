@@ -5,7 +5,7 @@
 <ul class="capture-photo-list">
   {% for p in job.photos %}
   <li>
-    <code>{{ p.ap_name }}</code> — {{ p.shot_type.value }}
+    <code class="ap-id">{{ p.ap_name }}</code> — {{ p.shot_type.value }}
     <span class="muted">({{ p.original_filename }})</span>
     {% if not job_locked %}
     <button type="button"

@@ -14,8 +14,8 @@ changes. Everything is buildable now except the live credential test.
 - Implement `NextcloudStorage.save / open / url_for` against **WebDAV** using a documented
   sample endpoint (🟡 `https://nextcloud.example.com/remote.php/dav/files/USER/`).
 - Config in `.env.example` (values placeholder; real ones never committed):
-  `STORAGE_BACKEND`, `NEXTCLOUD_URL`, `NEXTCLOUD_USER`, `NEXTCLOUD_APP_PASSWORD`,
-  `NEXTCLOUD_ROOT`.
+  `STORAGE_BACKEND`, `NEXTCLOUD_URL`, `NEXTCLOUD_USERNAME`, `NEXTCLOUD_PASSWORD`,
+  `NEXTCLOUD_WEBDAV_ROOT`.
 - Tests against a **mocked WebDAV** (respx/responses) so the impl is verified without live
   creds: upload path, fetch, `url_for` shape, error on missing file.
 - Keep `LocalStorage` as default; `STORAGE_BACKEND=local` stays the dev/CI default.

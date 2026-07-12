@@ -1,4 +1,6 @@
 """FastAPI app factory + entrypoint. Phase 0 scaffold."""
+from urllib.parse import quote
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 
@@ -14,6 +16,13 @@ def _is_exempt(path: str) -> bool:
     if path in _EXEMPT_EXACT:
         return True
     return path.startswith("/static")
+
+
+def _login_redirect_for(request: Request) -> str:
+    path = request.url.path
+    if request.url.query:
+        path = f"{path}?{request.url.query}"
+    return f"/login?next={quote(path, safe='')}"
 
 
 def create_app() -> FastAPI:
@@ -40,7 +49,7 @@ def create_app() -> FastAPI:
                 return await call_next(request)
             if request.session.get(SESSION_AUTH_KEY):
                 return await call_next(request)
-            return RedirectResponse(url="/login", status_code=303)
+            return RedirectResponse(url=_login_redirect_for(request), status_code=303)
 
         app.add_middleware(
             SessionMiddleware,

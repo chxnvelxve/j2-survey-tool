@@ -49,7 +49,16 @@ def test_mode_b_unauthenticated_redirects_to_login(monkeypatch: pytest.MonkeyPat
     client = _mode_b_app(monkeypatch)
     r = client.get("/", follow_redirects=False)
     assert r.status_code == 303
-    assert r.headers["location"] == "/login"
+    assert r.headers["location"] == "/login?next=%2F"
+
+
+def test_mode_b_unauthenticated_redirect_preserves_path_and_query(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = _mode_b_app(monkeypatch)
+    r = client.get("/jobs?status=draft", follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"] == "/login?next=%2Fjobs%3Fstatus%3Ddraft"
 
 
 def test_mode_b_wrong_password_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -60,7 +69,7 @@ def test_mode_b_wrong_password_rejected(monkeypatch: pytest.MonkeyPatch) -> None
 
     gated = client.get("/", follow_redirects=False)
     assert gated.status_code == 303
-    assert gated.headers["location"] == "/login"
+    assert gated.headers["location"] == "/login?next=%2F"
 
 
 def test_mode_b_correct_password_admits(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -90,7 +99,7 @@ def test_mode_b_logout_clears_session(monkeypatch: pytest.MonkeyPatch) -> None:
 
     gated = client.get("/", follow_redirects=False)
     assert gated.status_code == 303
-    assert gated.headers["location"] == "/login"
+    assert gated.headers["location"] == "/login?next=%2F"
 
 
 def test_mode_b_login_page_open(monkeypatch: pytest.MonkeyPatch) -> None:

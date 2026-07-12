@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import shutil
 import tempfile
+from collections.abc import Generator
 from io import BytesIO
 from pathlib import Path, PurePosixPath
 from typing import BinaryIO, Protocol
@@ -224,7 +225,14 @@ class NextcloudStorage:
         return Path(tmp.name)
 
 
-def get_storage() -> Storage:
+def get_storage() -> Generator[Storage, None, None]:
+    """Request-scoped storage. Closes owned Nextcloud httpx clients after the request."""
     if settings.STORAGE_BACKEND == "nextcloud":
-        return NextcloudStorage()
-    return LocalStorage()
+        storage: Storage = NextcloudStorage()
+    else:
+        storage = LocalStorage()
+    try:
+        yield storage
+    finally:
+        if isinstance(storage, NextcloudStorage):
+            storage.close()

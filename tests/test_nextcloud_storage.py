@@ -143,12 +143,22 @@ def test_filesystem_path_downloads_to_temp() -> None:
         path.unlink(missing_ok=True)
 
 
+def _consume_storage_dep():
+    """Drive the FastAPI-style yield dependency through setup/teardown."""
+    gen = get_storage()
+    storage = next(gen)
+    return storage, gen
+
+
 def test_get_storage_local_default() -> None:
     with patch("app.core.storage.settings") as mock_settings:
         mock_settings.STORAGE_BACKEND = "local"
         mock_settings.STORAGE_LOCAL_ROOT = "/tmp/storage-test"
-        storage = get_storage()
-    assert isinstance(storage, LocalStorage)
+        storage, gen = _consume_storage_dep()
+        try:
+            assert isinstance(storage, LocalStorage)
+        finally:
+            gen.close()
 
 
 def test_get_storage_nextcloud_missing_creds() -> None:
@@ -158,8 +168,24 @@ def test_get_storage_nextcloud_missing_creds() -> None:
         mock_settings.NEXTCLOUD_USERNAME = ""
         mock_settings.NEXTCLOUD_PASSWORD = ""
         mock_settings.NEXTCLOUD_WEBDAV_ROOT = ""
+        gen = get_storage()
         with pytest.raises(StorageNotConfiguredError):
-            get_storage()
+            next(gen)
+
+
+def test_get_storage_closes_nextcloud_client() -> None:
+    with patch("app.core.storage.settings") as mock_settings:
+        mock_settings.STORAGE_BACKEND = "nextcloud"
+        mock_settings.NEXTCLOUD_URL = BASE
+        mock_settings.NEXTCLOUD_USERNAME = USER
+        mock_settings.NEXTCLOUD_PASSWORD = PASSWORD
+        mock_settings.NEXTCLOUD_WEBDAV_ROOT = ROOT
+        storage, gen = _consume_storage_dep()
+        assert isinstance(storage, NextcloudStorage)
+        client = storage._client
+        assert not client.is_closed
+        gen.close()
+        assert client.is_closed
 
 
 @pytest.mark.parametrize("bad_path", REJECTED_PATHS)

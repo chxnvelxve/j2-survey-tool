@@ -6,12 +6,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 AccessMode = Literal["tailscale", "shared_password"]
 
+# Default placeholder — Mode B refuses to start if SECRET_KEY is still this value.
+_DEFAULT_SECRET_KEY = "changeme"
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     APP_ENV: str = "development"
-    SECRET_KEY: str = "changeme"
+    SECRET_KEY: str = _DEFAULT_SECRET_KEY
     DATABASE_URL: str = "postgresql+psycopg://j2:changeme@db:5432/j2survey"
 
     STORAGE_BACKEND: str = "local"
@@ -39,10 +42,19 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_access_mode(self) -> "Settings":
-        if self.ACCESS_MODE == "shared_password" and not self.SHARED_ACCESS_PASSWORD.strip():
+        if self.ACCESS_MODE != "shared_password":
+            return self
+        if not self.SHARED_ACCESS_PASSWORD.strip():
             raise ValueError(
                 "ACCESS_MODE=shared_password requires SHARED_ACCESS_PASSWORD to be set. "
                 "Use ACCESS_MODE=tailscale (v1 default) or set SHARED_ACCESS_PASSWORD.",
+            )
+        secret = self.SECRET_KEY.strip()
+        if not secret or secret == _DEFAULT_SECRET_KEY:
+            raise ValueError(
+                "ACCESS_MODE=shared_password requires SECRET_KEY to be set to a "
+                "non-default value (not blank or 'changeme'). "
+                "The session cookie is signed with SECRET_KEY.",
             )
         return self
 

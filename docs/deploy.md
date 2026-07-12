@@ -13,7 +13,7 @@ Minimal notes for running the J2 Survey Tool on a VPS with Docker Compose.
 | Variable | Notes |
 |---|---|
 | `APP_ENV` | Set to `production` (disables uvicorn `--reload`) |
-| `SECRET_KEY` | Change from default (strong random string) |
+| `SECRET_KEY` | Change from default (strong random string). **Required non-default when `ACCESS_MODE=shared_password`** |
 | `DATABASE_URL` | Postgres connection string |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Used by the `db` service |
 | `STORAGE_LOCAL_ROOT` | `/app/storage` inside container |
@@ -121,7 +121,7 @@ Assumptions:
 
 ### B — Shared password (off-tailnet)
 
-`ACCESS_MODE=shared_password` requires `SHARED_ACCESS_PASSWORD`. The app will **refuse to start** if the password is missing. Unauthenticated requests redirect to `/login`; a correct password sets a signed session cookie (`SECRET_KEY`). `/health` (and `/static`) stay open for probes. Mode A (`tailscale`) remains the documented v1 default — use Mode B only when someone must reach the app off the tailnet.
+`ACCESS_MODE=shared_password` requires `SHARED_ACCESS_PASSWORD` and a **non-default** `SECRET_KEY` (not blank or `changeme` — the session cookie is signed with it). The app will **refuse to start** if either is missing/weak. Unauthenticated requests redirect to `/login`; a correct password sets a signed session cookie. `/health` (and `/static`) stay open for probes. Mode A (`tailscale`) remains the documented v1 default — use Mode B only when someone must reach the app off the tailnet.
 
 There is **no silent fallback** between modes.
 
@@ -191,7 +191,7 @@ Day-2 ownership, branding/template swap, stub activation, and billing note:
 |---|---|
 | `web` container unhealthy | `docker compose logs web` — migration errors, missing `.env` |
 | `connection refused` on 8050 | `docker compose ps` — is `web` up? Prod compose binds `127.0.0.1` only |
-| App won't start, ACCESS_MODE error | `.env` has valid `ACCESS_MODE`; `shared_password` requires `SHARED_ACCESS_PASSWORD` |
+| App won't start, ACCESS_MODE error | `.env` has valid `ACCESS_MODE`; `shared_password` requires `SHARED_ACCESS_PASSWORD` and a non-default `SECRET_KEY` |
 | 502 from Tailscale Serve | App not listening on `127.0.0.1:8050`; verify health curl locally first |
 | `Serve is not enabled on your tailnet` | Admin must enable Serve in the Tailscale console (URL printed by CLI), then re-run `tailscale serve` |
 | Port 8050 already in use / web Created exit 128 | Prod override must use `ports: !override` (not append); see `docker-compose.prod.yml` |

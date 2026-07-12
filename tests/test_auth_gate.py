@@ -98,3 +98,43 @@ def test_mode_b_login_page_open(monkeypatch: pytest.MonkeyPatch) -> None:
     r = client.get("/login", follow_redirects=False)
     assert r.status_code == 200
     assert "Sign in" in r.text
+
+
+def test_mode_b_refuses_default_secret_key() -> None:
+    from pydantic import ValidationError
+
+    from app.core.config import Settings
+
+    with pytest.raises(ValidationError, match="SECRET_KEY"):
+        Settings(
+            ACCESS_MODE="shared_password",
+            SHARED_ACCESS_PASSWORD="ok-password",
+            SECRET_KEY="changeme",
+        )
+
+    with pytest.raises(ValidationError, match="SECRET_KEY"):
+        Settings(
+            ACCESS_MODE="shared_password",
+            SHARED_ACCESS_PASSWORD="ok-password",
+            SECRET_KEY="   ",
+        )
+
+    ok = Settings(
+        ACCESS_MODE="shared_password",
+        SHARED_ACCESS_PASSWORD="ok-password",
+        SECRET_KEY="strong-enough-secret",
+    )
+    assert ok.SECRET_KEY == "strong-enough-secret"
+
+
+def test_mode_b_refuses_missing_password() -> None:
+    from pydantic import ValidationError
+
+    from app.core.config import Settings
+
+    with pytest.raises(ValidationError, match="SHARED_ACCESS_PASSWORD"):
+        Settings(
+            ACCESS_MODE="shared_password",
+            SHARED_ACCESS_PASSWORD="",
+            SECRET_KEY="strong-enough-secret",
+        )

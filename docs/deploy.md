@@ -67,7 +67,7 @@ COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
 
 ```bash
 mkdir -p backups
-$COMPOSE exec -T db pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" \
+$COMPOSE exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' \
   > "backups/pg_$(date +%Y%m%d_%H%M%S).sql"
 ```
 
@@ -85,7 +85,7 @@ Or `rsync -a storage/ /path/to/offbox/storage/`.
 
 **Restore sketch**
 
-1. Restore SQL: `$COMPOSE exec -T db psql -U "$POSTGRES_USER" "$POSTGRES_DB" < backups/pg_….sql` (into an empty/fresh DB), **or** restore the `pgdata` volume from the copy.
+1. Restore SQL: `$COMPOSE exec -T db sh -c 'psql -U "$POSTGRES_USER" "$POSTGRES_DB"' < backups/pg_….sql` (into an empty/fresh DB), **or** restore the `pgdata` volume from the copy.
 2. Unpack `storage` onto the host path mounted as `./storage`.
 3. `$COMPOSE up -d` and confirm `GET /health`.
 

@@ -61,6 +61,7 @@ def _base_context(**extra: object) -> dict[str, object]:
     return {
         "brand_company_name": settings.BRAND_COMPANY_NAME,
         "brand_primary_color": settings.BRAND_PRIMARY_COLOR,
+        "app_env": settings.APP_ENV,
         "job_status_label": job_status_label,
         "generation_gate_label": generation_gate_label,
         "approval_gate_label": approval_gate_label,

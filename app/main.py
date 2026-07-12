@@ -3,6 +3,7 @@ from urllib.parse import quote
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.auth import SESSION_AUTH_KEY, router as auth_router
 from app.api.jobs import router as jobs_router
@@ -57,6 +58,8 @@ def create_app() -> FastAPI:
             same_site="lax",
             https_only=settings.APP_ENV == "production",
         )
+
+    app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
     return app
 

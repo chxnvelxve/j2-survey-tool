@@ -46,6 +46,7 @@ def _login_context(
     return {
         "brand_company_name": settings.BRAND_COMPANY_NAME,
         "brand_primary_color": settings.BRAND_PRIMARY_COLOR,
+        "app_env": settings.APP_ENV,
         "error": error,
         "next_url": next_url,
     }

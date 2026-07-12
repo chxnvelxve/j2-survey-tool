@@ -20,7 +20,7 @@ Minimal notes for running the J2 Survey Tool on a VPS with Docker Compose.
 | `STORAGE_BACKEND` | `local` (default); `nextcloud` WebDAV shell is ready — needs Josh’s creds to activate |
 | Branding vars | `BRAND_*`, `DOCX_TEMPLATE_PATH` |
 | `PUBLIC_HOSTNAME` | Placeholder `survey.example.com` — used by Caddy when serving a real domain |
-| `ACCESS_MODE` | `tailscale` (v1 default) or `shared_password` (MODE B — not implemented yet) |
+| `ACCESS_MODE` | `tailscale` (v1 default) or `shared_password` (MODE B — shared-password gate) |
 
 ## Development vs production compose
 
@@ -119,9 +119,9 @@ Assumptions:
 - Docker binds the web port to `127.0.0.1:8050` so the app is not exposed on the public NIC.
 - Full RBAC / multi-user auth is **parked** for post-v1.
 
-### B — Shared password (parked)
+### B — Shared password (off-tailnet)
 
-`ACCESS_MODE=shared_password` requires `SHARED_ACCESS_PASSWORD`. The app will **refuse to start** if the password is missing. The login gate itself is **not implemented in v1** — this documents the env contract for a small follow-up if J2 needs off-tailnet access. Do not set `ACCESS_MODE=shared_password` until MODE B is built.
+`ACCESS_MODE=shared_password` requires `SHARED_ACCESS_PASSWORD`. The app will **refuse to start** if the password is missing. Unauthenticated requests redirect to `/login`; a correct password sets a signed session cookie (`SECRET_KEY`). `/health` (and `/static`) stay open for probes. Mode A (`tailscale`) remains the documented v1 default — use Mode B only when someone must reach the app off the tailnet.
 
 There is **no silent fallback** between modes.
 
@@ -149,7 +149,7 @@ To remove: `tailscale serve reset`
 
 ### Alternative: Caddy (public domain or MODE B)
 
-Use when J2 has a real domain and wants Let's Encrypt, or when MODE B is implemented.
+Use when J2 has a real domain and wants Let's Encrypt, or when MODE B (shared-password gate) is enabled.
 
 Sample config: [`deploy/Caddyfile`](../deploy/Caddyfile)
 
@@ -191,7 +191,7 @@ Day-2 ownership, branding/template swap, stub activation, and billing note:
 |---|---|
 | `web` container unhealthy | `docker compose logs web` — migration errors, missing `.env` |
 | `connection refused` on 8050 | `docker compose ps` — is `web` up? Prod compose binds `127.0.0.1` only |
-| App won't start, ACCESS_MODE error | `.env` has valid `ACCESS_MODE`; don't use `shared_password` until MODE B exists |
+| App won't start, ACCESS_MODE error | `.env` has valid `ACCESS_MODE`; `shared_password` requires `SHARED_ACCESS_PASSWORD` |
 | 502 from Tailscale Serve | App not listening on `127.0.0.1:8050`; verify health curl locally first |
 | `Serve is not enabled on your tailnet` | Admin must enable Serve in the Tailscale console (URL printed by CLI), then re-run `tailscale serve` |
 | Port 8050 already in use / web Created exit 128 | Prod override must use `ports: !override` (not append); see `docker-compose.prod.yml` |

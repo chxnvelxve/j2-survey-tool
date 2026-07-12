@@ -42,8 +42,7 @@ class Settings(BaseSettings):
         if self.ACCESS_MODE == "shared_password" and not self.SHARED_ACCESS_PASSWORD.strip():
             raise ValueError(
                 "ACCESS_MODE=shared_password requires SHARED_ACCESS_PASSWORD to be set. "
-                "Shared-password gate is not implemented in v1 — use ACCESS_MODE=tailscale "
-                "or set the password when MODE B is enabled.",
+                "Use ACCESS_MODE=tailscale (v1 default) or set SHARED_ACCESS_PASSWORD.",
             )
         return self
 

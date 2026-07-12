@@ -17,7 +17,7 @@ Minimal notes for running the J2 Survey Tool on a VPS with Docker Compose.
 | `DATABASE_URL` | Postgres connection string |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Used by the `db` service |
 | `STORAGE_LOCAL_ROOT` | `/app/storage` inside container |
-| `STORAGE_BACKEND` | `local` for now; `nextcloud` is stubbed until Josh provides access |
+| `STORAGE_BACKEND` | `local` (default); `nextcloud` WebDAV shell is ready — needs Josh’s creds to activate |
 | Branding vars | `BRAND_*`, `DOCX_TEMPLATE_PATH` |
 | `PUBLIC_HOSTNAME` | Placeholder `survey.example.com` — used by Caddy when serving a real domain |
 | `ACCESS_MODE` | `tailscale` (v1 default) or `shared_password` (MODE B — not implemented yet) |
@@ -51,7 +51,43 @@ mkdir -p storage/uploads storage/output storage/jobs
 - `pgdata` — Postgres data (compose named volume)
 - `./storage:/app/storage` — uploaded files and generated reports
 
-Persist `./storage` on the host or map to a dedicated data path. Back up both `pgdata` and `./storage` before upgrades.
+Persist `./storage` on the host or map to a dedicated data path.
+
+## Backup
+
+Documented procedure only — no backup daemon. Run before upgrades or VPS moves.
+
+Compose files for these commands:
+
+```bash
+COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
+```
+
+**1. Postgres (logical dump — preferred)**
+
+```bash
+mkdir -p backups
+$COMPOSE exec -T db pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" \
+  > "backups/pg_$(date +%Y%m%d_%H%M%S).sql"
+```
+
+**2. Postgres (volume copy — alternative)**
+
+Stop the stack briefly, then copy the named volume `pgdata` (exact path depends on Docker root; e.g. `docker volume inspect <project>_pgdata`). Prefer `pg_dump` when possible.
+
+**3. File storage**
+
+```bash
+tar -czf "backups/storage_$(date +%Y%m%d_%H%M%S).tar.gz" storage
+```
+
+Or `rsync -a storage/ /path/to/offbox/storage/`.
+
+**Restore sketch**
+
+1. Restore SQL: `$COMPOSE exec -T db psql -U "$POSTGRES_USER" "$POSTGRES_DB" < backups/pg_….sql` (into an empty/fresh DB), **or** restore the `pgdata` volume from the copy.
+2. Unpack `storage` onto the host path mounted as `./storage`.
+3. `$COMPOSE up -d` and confirm `GET /health`.
 
 ## Health check
 
@@ -137,9 +173,17 @@ Caddy reverse-proxies to `127.0.0.1:8050` where Docker exposes the web container
 7. Open `https://<tailnet-hostname>/` from a tailnet device.
 8. Walk [`docs/uat_checklist.md`](uat_checklist.md) and sign off.
 
-## Nextcloud storage (blocked)
+## Nextcloud storage (activation blocked)
 
-`STORAGE_BACKEND=nextcloud` will fail at startup with a clear error until WebDAV credentials are provided by Josh. Use `local` until then.
+The WebDAV client is implemented. `STORAGE_BACKEND=nextcloud` still requires
+`NEXTCLOUD_URL`, `NEXTCLOUD_USERNAME`, and `NEXTCLOUD_PASSWORD` — missing creds raise
+loudly (no silent fallback to local). Use `STORAGE_BACKEND=local` until Josh provides
+access. See [`handoff.md`](handoff.md).
+
+## Operator handoff
+
+Day-2 ownership, branding/template swap, stub activation, and billing note:
+[`handoff.md`](handoff.md).
 
 ## Troubleshooting
 

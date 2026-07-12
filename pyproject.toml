@@ -1,0 +1,7 @@
+[tool.ruff]
+target-version = "py311"
+src = ["app", "tests"]
+
+# Narrow gate: syntax / undefined-name class only — no style crusade.
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82"]

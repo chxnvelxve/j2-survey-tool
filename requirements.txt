@@ -11,3 +11,4 @@ python-docx
 pytest
 httpx
 respx
+ruff

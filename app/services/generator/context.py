@@ -69,6 +69,12 @@ def _blank(value: str | None) -> str:
     return str(value).strip()
 
 
+def _prose_or_placeholder(value: str | None, placeholder: str) -> str:
+    if value is not None and str(value).strip():
+        return str(value).strip()
+    return placeholder
+
+
 def build_template_context(
     tpl: DocxTemplate,
     merged: MergedJob,
@@ -84,6 +90,9 @@ def build_template_context(
     survey_type: str | None = None,
     band_plan: str | None = None,
     site_metadata: str | None = None,
+    exec_summary: str | None = None,
+    scope_methodology: str | None = None,
+    findings: str | None = None,
 ) -> dict[str, object]:
     logo: InlineImage | None = None
     if branding.logo_path is not None and branding.logo_path.is_file():
@@ -166,9 +175,12 @@ def build_template_context(
         "band_plan": _blank(band_plan),
         "site_metadata": _blank(site_metadata),
         "success_criteria": criteria.as_context(),
-        "exec_summary": _EXEC_SUMMARY_PLACEHOLDER,
-        "scope_methodology": _SCOPE_METHODOLOGY_PLACEHOLDER,
-        "findings": _FINDINGS_PLACEHOLDER,
+        "exec_summary": _prose_or_placeholder(exec_summary, _EXEC_SUMMARY_PLACEHOLDER),
+        "scope_methodology": _prose_or_placeholder(
+            scope_methodology,
+            _SCOPE_METHODOLOGY_PLACEHOLDER,
+        ),
+        "findings": _prose_or_placeholder(findings, _FINDINGS_PLACEHOLDER),
         "ap_count": ap_count,
         "override_count": override_count,
         "aps": aps,

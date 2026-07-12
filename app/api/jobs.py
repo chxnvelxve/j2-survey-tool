@@ -14,7 +14,7 @@ from app.core.labels import (
 )
 from app.core.storage import Storage, get_storage
 from app.models.enums import PhotoShotType
-from app.schemas.job import JobCreate, JobListItem, JobRead, JobSettingsUpdate
+from app.schemas.job import JobCreate, JobListItem, JobProseUpdate, JobRead, JobSettingsUpdate
 from app.schemas.merge import FLAG_TYPE_LABELS
 from app.schemas.survey import ParsedSurveyFile, floor_name_for
 from app.services.generator.errors import GeneratorError
@@ -45,6 +45,7 @@ from app.services.jobs import (
     get_job,
     job_is_locked,
     list_jobs,
+    update_job_prose,
     update_job_settings,
     upload_attachment,
     upload_photo,
@@ -232,6 +233,38 @@ def jobs_update_settings(
     return templates.TemplateResponse(
         request,
         "partials/jobs/capture_settings.html",
+        ctx,
+    )
+
+
+@router.post("/{job_id}/prose", response_class=HTMLResponse)
+def jobs_update_prose(
+    request: Request,
+    job_id: int,
+    exec_summary: str = Form(default=""),
+    scope_methodology: str = Form(default=""),
+    findings: str = Form(default=""),
+    db: Session = Depends(get_db),
+    storage: Storage = Depends(get_storage),
+) -> HTMLResponse:
+    job = get_job(db, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    payload = JobProseUpdate(
+        exec_summary=exec_summary or None,
+        scope_methodology=scope_methodology or None,
+        findings=findings or None,
+    )
+    ctx = _job_detail_context(db, storage, job_id)
+    try:
+        update_job_prose(db, job, payload)
+        ctx = _job_detail_context(db, storage, job_id)
+        ctx["prose_saved"] = True
+    except JobLockedError as exc:
+        ctx["prose_error"] = str(exc)
+    return templates.TemplateResponse(
+        request,
+        "partials/jobs/drafted_prose.html",
         ctx,
     )
 

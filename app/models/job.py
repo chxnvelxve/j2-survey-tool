@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum, JSON, String, func
+from sqlalchemy import DateTime, Enum, JSON, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -55,6 +55,10 @@ class Job(Base):
     site_metadata: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     # Per-job threshold override (Phase 9). Wins over profiles lookup when set.
     success_criteria_override: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # DRAFTED prose overrides (Phase 13d). Empty/null → generator placeholders.
+    exec_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    scope_methodology: Mapped[str | None] = mapped_column(Text, nullable=True)
+    findings: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     survey_files: Mapped[list["SurveyFile"]] = relationship(
         back_populates="job",

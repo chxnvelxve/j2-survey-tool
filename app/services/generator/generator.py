@@ -59,6 +59,9 @@ def generate_docx(
     survey_type: str | None = None,
     band_plan: str | None = None,
     site_metadata: str | None = None,
+    exec_summary: str | None = None,
+    scope_methodology: str | None = None,
+    findings: str | None = None,
 ) -> bytes:
     """Validate, build context, render docxtpl, return .docx bytes."""
     _validate_inputs(merged, template_path, attachments)
@@ -78,6 +81,9 @@ def generate_docx(
         survey_type=survey_type,
         band_plan=band_plan,
         site_metadata=site_metadata,
+        exec_summary=exec_summary,
+        scope_methodology=scope_methodology,
+        findings=findings,
     )
     tpl.render(context)
 

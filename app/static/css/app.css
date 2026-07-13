@@ -268,7 +268,7 @@ form button:hover { opacity: 0.9; }
   font-size: var(--text-sm);
 }
 .checklist li {
-  padding: var(--space-1) 0 var(--space-1) 1.25rem;
+  padding: var(--space-1) 0 var(--space-1) 1.5rem;
   position: relative;
 }
 .checklist li::before {
@@ -277,9 +277,11 @@ form button:hover { opacity: 0.9; }
   left: 0;
   color: var(--text-disabled);
 }
+/* Phase 14c — semantic readiness markers (token-driven) */
 .checklist--ok::before { content: "✓"; color: var(--status-success); }
-.checklist--pending::before { content: "○"; color: var(--text-disabled); }
-/* Phase 11 — field capture (phone-width) */
+.checklist--pending::before { content: "○"; color: var(--status-warning); }
+.checklist--blocked::before { content: "■"; color: var(--status-error); }
+/* Phase 11 — field capture (phone-width); Phase 14c polish */
 .capture-page main,
 .capture-page {
   max-width: 28rem;
@@ -289,12 +291,18 @@ form button:hover { opacity: 0.9; }
   margin-bottom: var(--space-3);
   font-weight: var(--weight-medium);
 }
+.capture-page .ap-id {
+  font-size: var(--text-xl);
+}
 .touch-target {
   min-height: 2.75rem;
   font-size: var(--text-base);
   width: 100%;
   max-width: none;
   padding: 0.6rem var(--space-3);
+}
+.capture-page .touch-target {
+  min-height: var(--touch-field);
 }
 form button.touch-target {
   width: 100%;
@@ -343,6 +351,28 @@ form button.touch-target {
 }
 .capture-settings-readonly dd {
   margin: 0.15rem 0 0;
+}
+/* Phase 14c — readiness count above terminal CTA (sticky only on phone) */
+.mobile-action-bar__count {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+@media (max-width: 640px) {
+  .mobile-action-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: var(--z-sticky);
+    background: var(--surface-card);
+    border-top: 1px solid var(--border-default);
+    padding: var(--space-3);
+    margin: 0 calc(-1 * var(--space-4));
+    box-shadow: 0 -2px 8px color-mix(in srgb, var(--text-primary) 8%, transparent);
+  }
+  .mobile-action-bar form button {
+    width: 100%;
+    min-height: var(--touch-field);
+  }
 }
 /* Mobile-readable stacked cards (jobs / APs / flags) */
 .card-list {

@@ -45,22 +45,29 @@
   <p class="error">{{ approve_error }}</p>
   {% endif %}
 
-  <form hx-post="/jobs/{{ job.id }}/approve"
-        hx-target="#review-section"
-        hx-swap="outerHTML">
-    <label>
-      Approved by (optional)
-      <input type="text" name="approved_by" maxlength="255" placeholder="Name or initials">
-    </label>
-    <button type="submit"
-            {% if job.status.value == 'draft_in_review' %}class="btn-accent"{% endif %}
-            {% if not approve_ready %}disabled title="{{ approve_block_reason }}"{% endif %}>
-      Approve
-    </button>
-    {% if not approve_ready and approve_block_reason %}
-    <span class="muted">{{ approve_block_reason }}</span>
-    {% endif %}
-  </form>
+  {% set approve_ready_n = (1 if generate_ready else 0)
+                         + (1 if job.status.value == 'draft_in_review' else 0)
+                         + (1 if job.deliverable_path and job.generated_at else 0)
+                         + (1 if approve_ready else 0) %}
+  <div class="mobile-action-bar">
+    <p class="mobile-action-bar__count tabular-nums">{{ approve_ready_n }}/4 ready</p>
+    <form hx-post="/jobs/{{ job.id }}/approve"
+          hx-target="#review-section"
+          hx-swap="outerHTML">
+      <label>
+        Approved by (optional)
+        <input type="text" name="approved_by" maxlength="255" placeholder="Name or initials">
+      </label>
+      <button type="submit"
+              {% if job.status.value == 'draft_in_review' %}class="btn-accent"{% endif %}
+              {% if not approve_ready %}disabled title="{{ approve_block_reason }}"{% endif %}>
+        Approve
+      </button>
+      {% if not approve_ready and approve_block_reason %}
+      <span class="muted">{{ approve_block_reason }}</span>
+      {% endif %}
+    </form>
+  </div>
   {% else %}
   <p class="muted">This job is approved and locked.</p>
   {% endif %}

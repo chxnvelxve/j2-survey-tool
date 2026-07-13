@@ -48,10 +48,15 @@ repo root using the required structure. Do not push, commit, or touch main."
 # approval_policy via -c: --ask-for-approval was removed from newer CLIs.
 # Project .codex/config.toml also sets these; -c makes the hook self-contained.
 # Close stdin so non-interactive/hook runs don't hang on "Reading additional input…".
+# Fail closed if Codex itself errors (do not fall through to a stale QA-REPORT.md).
 codex exec \
   -c approval_policy=never \
   --sandbox workspace-write \
   "$PROMPT" </dev/null
+if [ $? -ne 0 ]; then
+  echo "⚠️  Codex review failed. Blocking push so you can look."
+  exit 1
+fi
 
 # Decide pass/block from the verdict Codex wrote.
 if [ ! -f QA-REPORT.md ]; then

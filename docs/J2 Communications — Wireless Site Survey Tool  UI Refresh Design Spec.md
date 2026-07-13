@@ -1,7 +1,7 @@
 # J2 Communications — Wireless Site Survey Tool: UI Refresh Design Spec
-> **For:** Chance Love, Network Systems Engineer  
-> **Brand Source:** j2comms.com (inspected July 2026) + provided app screenshots  
-> **Stack:** Server-rendered Jinja2 + HTMX, CSS custom properties, no React  
+> **For:** Chance Love, Network Systems Engineer<br>
+> **Brand Source:** j2comms.com (inspected July 2026) + provided app screenshots<br>
+> **Stack:** Server-rendered Jinja2 + HTMX, CSS custom properties, no React<br>
 > **Audience:** Field techs (mobile-first), PM/owners/drafters (desktop approval view)
 
 ***
@@ -72,9 +72,9 @@ IBM Plex Sans is the correct choice here for four concrete reasons:
 4. **Avoids the Inter/Roboto default rut.** Inter and Roboto are everywhere; Plex is recognizably deliberate — it signals "someone chose this" rather than "we accepted the default."
 ### Font Loading (paste into `<head>`)
 ```html
-//fonts.googleapis.com">
-//fonts.gstatic.com" crossorigin>
-//fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 ```
 ### Type Scale CSS Variables
 ```css
@@ -331,8 +331,6 @@ Drop this `:root` block into your existing CSS file. The single line to update w
 
 *Design spec authored July 2026. All hex values derived from j2comms.com brand inspection and calibrated for WCAG AA compliance. IBM Plex Sans/Mono available free under OFL-1.1 via Google Fonts. Token architecture is swappable — no values are hardcoded into component styles; all consume `:root` variables.*
 
----
-
 ## References
 
 1. [The package of IBM's typeface, IBM Plex.](https://github.com/IBM/plex) - The package of IBM’s typeface, IBM Plex. Contribute to IBM/plex development by creating an account o...
@@ -340,4 +338,3 @@ Drop this `:root` block into your existing CSS file. The single line to update w
 2. [Plex - IBM Design](https://www.ibm.com/design/impact/plex/) - At IBM, our design philosophy is to help guide people so they can do their best work. Our human-cent...
 
 3. [IBM Plex Sans Typography — DESIGN.md | designmd.app](https://designmd.app/library/ibm-plex-sans-typography) - Render a 2D isolated text on a solid background. Ideal for enterprise products, design systems, docu...
-

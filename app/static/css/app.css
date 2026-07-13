@@ -278,9 +278,9 @@ form button:hover { opacity: 0.9; }
   color: var(--text-disabled);
 }
 /* Phase 14c — semantic readiness markers (token-driven) */
-.checklist--ok::before { content: "✓"; color: var(--status-success); }
-.checklist--pending::before { content: "○"; color: var(--status-warning); }
-.checklist--blocked::before { content: "■"; color: var(--status-error); }
+.checklist li.checklist--ok::before { content: "✓"; color: var(--status-success); }
+.checklist li.checklist--pending::before { content: "○"; color: var(--status-warning); }
+.checklist li.checklist--blocked::before { content: "■"; color: var(--status-error); }
 /* Phase 11 — field capture (phone-width); Phase 14c polish */
 .capture-page main,
 .capture-page {

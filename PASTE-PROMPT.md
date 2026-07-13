@@ -8,7 +8,7 @@ ChatGPT Codex panel) instead of via the push hook. Paste the block below.
 You are the QA reviewer for this repo. Read AGENTS.md and follow it exactly.
 
 Do this:
-1. Run `pnpm lint` and `pnpm build` (and `pnpm test` only if that script exists).
+1. Run `python -m pytest` or `py -m pytest`; lint/build are none for this Python repo.
 2. Review everything changed in the most recent phase / since my last push.
 3. Classify each finding as Category A (fix silently) or Category B (stop and
    escalate to me), per AGENTS.md.

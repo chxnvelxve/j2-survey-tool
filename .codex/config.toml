@@ -1,0 +1,17 @@
+# Project-scoped Codex config for QA runs.
+# Lives at <repo>/.codex/config.toml
+
+# Keep Codex from wandering outside the repo during QA.
+sandbox_mode = "workspace-write"
+
+# Don't pause for approvals during automated QA (the hook runs non-interactively).
+approval_policy = "never"
+
+# Optional: pin the model /review uses. Leave commented to use your session default.
+# Set this to whatever your ChatGPT Pro plan exposes as the strong Codex model.
+# review_model = "gpt-5.1-codex"
+
+[tui]
+# Desktop toast when a QA turn finishes, so you know to look.
+notifications = true
+notification_condition = "always"

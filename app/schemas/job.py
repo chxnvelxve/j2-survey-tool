@@ -10,6 +10,7 @@ __all__ = [
     "AttachmentRead",
     "JobCreate",
     "JobListItem",
+    "JobProseUpdate",
     "JobRead",
     "JobSettingsUpdate",
     "PhotoRead",
@@ -29,6 +30,14 @@ class JobSettingsUpdate(BaseModel):
     location_vertical: str | None = Field(default=None, max_length=255)
     band_plan: str | None = Field(default=None, max_length=255)
     site_metadata: str | None = Field(default=None, max_length=1024)
+
+
+class JobProseUpdate(BaseModel):
+    """Per-job DRAFTED section prose (Phase 13d). Empty clears to placeholder."""
+
+    exec_summary: str | None = None
+    scope_methodology: str | None = None
+    findings: str | None = None
 
 
 class FileRecordRead(BaseModel):
@@ -80,6 +89,9 @@ class JobRead(BaseModel):
     band_plan: str | None = None
     site_metadata: str | None = None
     success_criteria_override: dict | None = None
+    exec_summary: str | None = None
+    scope_methodology: str | None = None
+    findings: str | None = None
     survey_files: list[SurveyFileRead] = Field(default_factory=list)
     photos: list[PhotoRead] = Field(default_factory=list)
     attachments: list[AttachmentRead] = Field(default_factory=list)

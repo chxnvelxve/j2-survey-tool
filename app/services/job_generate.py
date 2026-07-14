@@ -157,6 +157,9 @@ def generate_job_report(db: Session, storage: Storage, job: Job) -> str:
             survey_type=job.survey_type,
             band_plan=job.band_plan,
             site_metadata=job.site_metadata,
+            exec_summary=job.exec_summary,
+            scope_methodology=job.scope_methodology,
+            findings=job.findings,
         )
     except GeneratorError:
         raise

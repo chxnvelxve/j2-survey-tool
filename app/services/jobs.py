@@ -16,7 +16,7 @@ from app.models.enums import JobStatus, PhotoShotType
 from app.models.job import Job
 from app.models.photo import Photo
 from app.models.survey_file import SurveyFile
-from app.schemas.job import JobSettingsUpdate
+from app.schemas.job import JobProseUpdate, JobSettingsUpdate
 
 
 class InvalidSurveyFileError(Exception):
@@ -88,6 +88,17 @@ def update_job_settings(db: Session, job: Job, settings: JobSettingsUpdate) -> J
     job.location_vertical = _blank_to_none(settings.location_vertical)
     job.band_plan = _blank_to_none(settings.band_plan)
     job.site_metadata = _blank_to_none(settings.site_metadata)
+    db.commit()
+    db.refresh(job)
+    return job
+
+
+def update_job_prose(db: Session, job: Job, prose: JobProseUpdate) -> Job:
+    """Persist DRAFTED prose overrides. Empty/blank clears to generator placeholder."""
+    _ensure_not_locked(job)
+    job.exec_summary = _blank_to_none(prose.exec_summary)
+    job.scope_methodology = _blank_to_none(prose.scope_methodology)
+    job.findings = _blank_to_none(prose.findings)
     db.commit()
     db.refresh(job)
     return job

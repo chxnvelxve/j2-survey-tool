@@ -8,6 +8,7 @@ psycopg[binary]
 pydantic-settings
 docxtpl
 python-docx
+itsdangerous
 pytest
 httpx
 respx

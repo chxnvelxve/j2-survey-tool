@@ -5,8 +5,9 @@ keys from `app/services/generator/context.py`. The contract test
 (`tests/test_context_contract.py`) fails if a documented key disappears.
 
 **AUTO** = machine-fed from Job / MergedJob / branding.
-**DRAFTED** = human-written placeholder string until Josh's sample deliverable
-arrives (🔒 activation).
+**DRAFTED** = human prose. Prefer non-empty `Job.exec_summary` /
+`Job.scope_methodology` / `Job.findings` (Phase 13d); otherwise the built-in
+placeholder string until Josh's sample deliverable arrives (🔒 13b activation).
 
 Legend: 🟡 sample / placeholder · 🔒 blocked on Josh
 
@@ -26,13 +27,13 @@ Legend: 🟡 sample / placeholder · 🔒 blocked on Josh
 
 | Context key | Source |
 |-------------|--------|
-| `exec_summary` | Placeholder prose from context.py 🟡 |
+| `exec_summary` | `Job.exec_summary` if set, else placeholder prose from context.py 🟡 |
 
 ## 3. Scope / Methodology — DRAFTED (+ AUTO crumbs)
 
 | Context key | Source |
 |-------------|--------|
-| `scope_methodology` | Placeholder prose 🟡 |
+| `scope_methodology` | `Job.scope_methodology` if set, else placeholder prose 🟡 |
 | `survey_type` | Job.survey_type (or "—") |
 | `location_vertical` | Job.location_vertical (or "—") |
 | `band_plan` | Job.band_plan (or "—") |
@@ -57,7 +58,7 @@ Per-job `success_criteria_override` JSON wins field-by-field when set.
 
 | Context key | Source |
 |-------------|--------|
-| `findings` | Placeholder prose 🟡 (no RF pass/fail math in shell) |
+| `findings` | `Job.findings` if set, else placeholder prose 🟡 (no RF pass/fail math in shell) |
 | `ap_count` | `len(aps)` |
 | `override_count` | `len(overrides)` |
 

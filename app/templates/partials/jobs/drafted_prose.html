@@ -1,0 +1,38 @@
+{% if prose_error %}
+<p class="error">{{ prose_error }}</p>
+{% endif %}
+{% if prose_saved %}
+<p class="muted">Drafted sections saved.</p>
+{% endif %}
+<p class="muted">Optional. Empty fields use the built-in placeholder text in the generated report.</p>
+{% if job_locked %}
+<dl class="capture-settings-readonly">
+  <dt>Executive summary</dt>
+  <dd>{{ job.exec_summary or "(placeholder)" }}</dd>
+  <dt>Scope / methodology</dt>
+  <dd>{{ job.scope_methodology or "(placeholder)" }}</dd>
+  <dt>Findings</dt>
+  <dd>{{ job.findings or "(placeholder)" }}</dd>
+</dl>
+{% else %}
+<form hx-post="/jobs/{{ job.id }}/prose"
+      hx-target="#drafted-prose"
+      hx-swap="innerHTML">
+  <label class="capture-label">
+    Executive summary
+    <textarea name="exec_summary" rows="4" class="touch-target"
+              placeholder="Leave blank to use the default placeholder">{{ job.exec_summary or '' }}</textarea>
+  </label>
+  <label class="capture-label">
+    Scope / methodology
+    <textarea name="scope_methodology" rows="4" class="touch-target"
+              placeholder="Leave blank to use the default placeholder">{{ job.scope_methodology or '' }}</textarea>
+  </label>
+  <label class="capture-label">
+    Findings
+    <textarea name="findings" rows="4" class="touch-target"
+              placeholder="Leave blank to use the default placeholder">{{ job.findings or '' }}</textarea>
+  </label>
+  <button type="submit" class="touch-target">Save drafted sections</button>
+</form>
+{% endif %}

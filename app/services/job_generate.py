@@ -89,14 +89,12 @@ def generation_readiness(
 
 
 def _branding_config() -> BrandingConfig:
-    logo: Path | None = None
-    if settings.BRAND_LOGO_PATH.strip():
-        candidate = Path(settings.BRAND_LOGO_PATH)
-        if candidate.is_file():
-            logo = candidate
+    # Pass the configured path through as-is; the generator resolves it and warns
+    # if it does not exist (rather than silently dropping the logo here).
+    raw_logo_path = settings.BRAND_LOGO_PATH.strip()
     return BrandingConfig(
         company_name=settings.BRAND_COMPANY_NAME,
-        logo_path=logo,
+        logo_path=Path(raw_logo_path) if raw_logo_path else None,
         primary_color=settings.BRAND_PRIMARY_COLOR,
     )
 

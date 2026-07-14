@@ -1,12 +1,15 @@
 """Unit tests for the generator stage."""
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import pytest
 from docx import Document
+from docxtpl import DocxTemplate, InlineImage
 
 from app.models.enums import PhotoShotType
+from app.services.generator.context import build_template_context
 from app.schemas.merge import (
     Flag,
     FlagType,
@@ -28,6 +31,7 @@ from app.services.generator.types import AttachmentInput, BrandingConfig
 
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE = ROOT / "templates_docx" / "survey_report.docx"
+LOGO = ROOT / "branding" / "j2_logo_placeholder.png"
 FIXTURES = Path(__file__).parent / "fixtures"
 PHOTO_CLOSE = FIXTURES / "gen_photo_close.png"
 PHOTO_FAR = FIXTURES / "gen_photo_far.png"
@@ -140,6 +144,52 @@ def test_generate_docx_happy_path(tmp_path: Path) -> None:
     assert "144" in text
     assert "validation" in text
     assert "Building A" in text
+
+
+def test_logo_inline_image_present_when_configured(tmp_path: Path) -> None:
+    _ensure_photos()
+    assert LOGO.is_file(), "Canonical placeholder logo missing — run build_placeholder_logo.py"
+    tpl = DocxTemplate(str(TEMPLATE))
+    ctx = build_template_context(
+        tpl,
+        _merged_job(),
+        branding=BrandingConfig(
+            company_name="Test Survey Co",
+            logo_path=LOGO,
+            primary_color="#1F4E79",
+        ),
+        job_name="Job",
+        project_name="Project",
+        floor_name_for=lambda _fid: "Floor 1",
+        photo_paths={1: PHOTO_CLOSE, 2: PHOTO_FAR},
+        attachments=_attachments(tmp_path),
+    )
+    assert isinstance(ctx["logo"], InlineImage)
+
+
+def test_unresolvable_logo_path_warns_and_omits(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    _ensure_photos()
+    tpl = DocxTemplate(str(TEMPLATE))
+    with caplog.at_level(logging.WARNING, logger="app.services.generator.context"):
+        ctx = build_template_context(
+            tpl,
+            _merged_job(),
+            branding=BrandingConfig(
+                company_name="Test Survey Co",
+                logo_path=tmp_path / "does_not_exist.png",
+                primary_color="#1F4E79",
+            ),
+            job_name="Job",
+            project_name="Project",
+            floor_name_for=lambda _fid: "Floor 1",
+            photo_paths={1: PHOTO_CLOSE, 2: PHOTO_FAR},
+            attachments=_attachments(tmp_path),
+        )
+    assert ctx["logo"] is None
+    assert any("does not resolve" in record.message for record in caplog.records)
 
 
 def test_unresolved_flags_error(tmp_path: Path) -> None:

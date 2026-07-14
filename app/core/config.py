@@ -26,6 +26,10 @@ class Settings(BaseSettings):
 
     # Branding — kept OUT of engine code so the tool re-skins per client.
     # 🟡 Phase 9 sample defaults — swap real J2 assets/hex on activation.
+    # BRAND_LOGO_PATH is the canonical logo location: the git-tracked placeholder
+    # written by scripts/build_placeholder_logo.py. Relative paths resolve from the
+    # app CWD (/app in Docker). Keep this, .env(.example), and the build script's
+    # output path in sync; the generator logs a warning if the path does not resolve.
     BRAND_COMPANY_NAME: str = "J2 Communications"
     BRAND_LOGO_PATH: str = "branding/j2_logo_placeholder.png"
     BRAND_PRIMARY_COLOR: str = "#1F4E79"

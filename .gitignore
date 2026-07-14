@@ -12,3 +12,4 @@ storage/jobs/*
 !tests/fixtures/*.esx
 .pytest_cache/
 QA-REPORT.md
+demo_fallback/

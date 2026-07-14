@@ -1,4 +1,6 @@
 """Job CRUD and upload routes."""
+from urllib.parse import quote
+
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
@@ -336,11 +338,17 @@ def jobs_download_report(
         file_handle = storage.open(job.deliverable_path)
     except OSError as exc:
         raise HTTPException(status_code=404, detail="Deliverable file not found") from exc
-    safe_name = job.name.replace('"', "'")
+    # Content-Disposition filename= must be latin-1 safe; keep UTF-8 in filename*.
+    display_name = f"{job.name}_report.docx".replace('"', "'")
+    ascii_name = f"job_{job.id}_report.docx"
+    content_disposition = (
+        f'attachment; filename="{ascii_name}"; '
+        f"filename*=UTF-8''{quote(display_name)}"
+    )
     return StreamingResponse(
         file_handle,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        headers={"Content-Disposition": f'attachment; filename="{safe_name}_report.docx"'},
+        headers={"Content-Disposition": content_disposition},
     )
 
 

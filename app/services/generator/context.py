@@ -5,6 +5,7 @@ documented keys disappear.
 """
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,8 @@ from app.schemas.survey import SurveyRadio
 from app.services.generator.errors import MissingPhotoFileError
 from app.services.generator.profiles import SuccessCriteria, resolve_profile
 from app.services.generator.types import AttachmentInput, BrandingConfig
+
+logger = logging.getLogger(__name__)
 
 PHOTO_WIDTH = Mm(55)
 LOGO_WIDTH = Mm(40)
@@ -37,6 +40,24 @@ _FINDINGS_PLACEHOLDER = (
     "data and field photos. Summary counts below are machine-fed. "
     "(Placeholder — RF pass/fail math is not computed in v1 shell.)"
 )
+
+
+def _resolve_logo(tpl: DocxTemplate, logo_path: Path | None) -> InlineImage | None:
+    """Resolve the branded logo, warning (not silently dropping) on a bad path.
+
+    A None path means no logo was configured — that is fine and silent. A
+    configured path that does not resolve is a misconfiguration worth surfacing,
+    so the report renders unbranded instead of failing, but logs a warning.
+    """
+    if logo_path is None:
+        return None
+    if logo_path.is_file():
+        return InlineImage(tpl, str(logo_path), width=LOGO_WIDTH)
+    logger.warning(
+        "Configured brand logo path %s does not resolve; rendering report without logo.",
+        logo_path,
+    )
+    return None
 
 
 def _radio_label(radio: SurveyRadio) -> str:
@@ -85,9 +106,7 @@ def build_template_context(
     band_plan: str | None = None,
     site_metadata: str | None = None,
 ) -> dict[str, object]:
-    logo: InlineImage | None = None
-    if branding.logo_path is not None and branding.logo_path.is_file():
-        logo = InlineImage(tpl, str(branding.logo_path), width=LOGO_WIDTH)
+    logo = _resolve_logo(tpl, branding.logo_path)
 
     criteria: SuccessCriteria = resolve_profile(
         location_vertical,

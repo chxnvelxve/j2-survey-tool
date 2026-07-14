@@ -1,0 +1,538 @@
+<title>J2 Survey Automation — What it is & what it does for you</title>
+<style>
+  :root{
+    --ground:#0c1826; --ground-2:#122234; --panel:#152b40;
+    --line:rgba(120,165,200,.14); --grid:rgba(120,165,200,.055);
+    --ink:#e9f1f7; --ink-soft:#9fb4c6; --ink-faint:#6f889b;
+    --navy:#3d7fbf; --signal:#38c7ce;
+    --matched:#5ec98d; --pending:#e7ab4d; --flag:#e8715a;
+    --radius:14px; --maxw:1120px;
+    --sans:"Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,"Cascadia Code","Segoe UI Mono",Consolas,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --ground:#eef2f6; --ground-2:#ffffff; --panel:#ffffff;
+      --line:rgba(28,64,102,.14); --grid:rgba(28,64,102,.06);
+      --ink:#122a3d; --ink-soft:#4d6479; --ink-faint:#7c93a6;
+      --navy:#1f4e79; --signal:#0f8792;
+      --matched:#2c8f5c; --pending:#a86f18; --flag:#c1462f;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0c1826; --ground-2:#122234; --panel:#152b40;
+    --line:rgba(120,165,200,.14); --grid:rgba(120,165,200,.055);
+    --ink:#e9f1f7; --ink-soft:#9fb4c6; --ink-faint:#6f889b;
+    --navy:#3d7fbf; --signal:#38c7ce;
+    --matched:#5ec98d; --pending:#e7ab4d; --flag:#e8715a;
+  }
+  :root[data-theme="light"]{
+    --ground:#eef2f6; --ground-2:#ffffff; --panel:#ffffff;
+    --line:rgba(28,64,102,.14); --grid:rgba(28,64,102,.06);
+    --ink:#122a3d; --ink-soft:#4d6479; --ink-faint:#7c93a6;
+    --navy:#1f4e79; --signal:#0f8792;
+    --matched:#2c8f5c; --pending:#a86f18; --flag:#c1462f;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0}
+  .page{
+    font-family:var(--sans); color:var(--ink);
+    background-color:var(--ground);
+    background-image:
+      linear-gradient(var(--grid) 1px,transparent 1px),
+      linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:34px 34px;
+    line-height:1.65; -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 clamp(20px,5vw,44px)}
+  .col{max-width:62ch}
+
+  .eyebrow{
+    font-family:var(--mono); font-size:.72rem; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--signal); margin:0 0 14px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{content:""; width:26px; height:1px; background:var(--signal); opacity:.7}
+
+  h1,h2,h3{text-wrap:balance; margin:0; font-weight:700; letter-spacing:-.02em}
+  h1{font-size:clamp(2.2rem,6vw,3.9rem); line-height:1.04}
+  h2{font-size:clamp(1.55rem,3.4vw,2.3rem); line-height:1.1}
+  h3{font-size:1.14rem; letter-spacing:-.01em}
+  p{margin:0}
+  .lead{font-size:clamp(1.08rem,1.6vw,1.28rem); color:var(--ink-soft); line-height:1.55}
+  strong{color:var(--ink); font-weight:650}
+  .signalword{color:var(--signal)}
+
+  section{padding:clamp(56px,8vw,104px) 0; position:relative}
+  section + section{border-top:1px solid var(--line)}
+
+  /* ---------- HERO ---------- */
+  .hero{padding-top:clamp(52px,7vw,84px)}
+  .hero-grid{display:grid; grid-template-columns:1.15fr .85fr; gap:clamp(32px,5vw,64px); align-items:center}
+  .brandline{display:flex; align-items:center; gap:14px; margin-bottom:clamp(30px,5vw,52px)}
+  .mark{
+    font-family:var(--mono); font-weight:700; font-size:1.05rem; letter-spacing:.02em;
+    color:var(--ground); background:var(--signal);
+    width:40px; height:40px; border-radius:9px; display:grid; place-items:center; flex:none;
+  }
+  .brandline .who{font-family:var(--mono); font-size:.74rem; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); line-height:1.5}
+  .brandline .who b{color:var(--ink); font-weight:600}
+  .hero h1{margin:8px 0 22px}
+  .hero .lead{max-width:40ch}
+  .chips{display:flex; flex-wrap:wrap; gap:10px; margin-top:30px}
+  .chip{
+    font-family:var(--mono); font-size:.72rem; letter-spacing:.04em;
+    padding:7px 12px; border-radius:100px; border:1px solid var(--line);
+    background:var(--ground-2); color:var(--ink-soft); display:flex; gap:8px; align-items:center;
+  }
+  .chip .dot{width:7px; height:7px; border-radius:50%; background:var(--matched); flex:none}
+
+  /* coverage map */
+  .plan{width:100%; height:auto; display:block; filter:drop-shadow(0 24px 44px rgba(0,0,0,.28))}
+  .plan .ring{transform-box:fill-box; transform-origin:center}
+  @keyframes pulse{0%{opacity:.5; transform:scale(.55)} 70%{opacity:0} 100%{opacity:0; transform:scale(1)}}
+  .plan .ring{animation:pulse 4.2s ease-out infinite}
+  .plan .r2{animation-delay:.5s} .plan .r3{animation-delay:1s}
+  .plan .node-flag .ring{animation-duration:2.1s}
+
+  /* ---------- WHY ---------- */
+  .why .pull{
+    font-size:clamp(1.5rem,3vw,2.15rem); font-weight:650; letter-spacing:-.02em;
+    line-height:1.25; text-wrap:balance; max-width:20ch;
+  }
+  .why-body{display:grid; grid-template-columns:1fr 1fr; gap:clamp(28px,4vw,56px); margin-top:34px; align-items:start}
+  .why-body p + p{margin-top:16px}
+
+  /* ---------- PIPELINE ---------- */
+  .rail{
+    margin-top:44px; display:grid; gap:14px;
+    grid-template-columns:repeat(6,1fr);
+    position:relative;
+  }
+  .rail::before{
+    content:""; position:absolute; left:5%; right:5%; top:26px; height:2px;
+    background:linear-gradient(90deg,var(--signal),var(--navy));
+    opacity:.45; z-index:0;
+  }
+  .rail::after{
+    content:""; position:absolute; left:5%; top:22px; width:10px; height:10px; border-radius:50%;
+    background:var(--signal); box-shadow:0 0 14px 3px var(--signal); z-index:1;
+    animation:travel 5.5s cubic-bezier(.7,0,.3,1) infinite;
+  }
+  @keyframes travel{0%{left:5%; opacity:0} 8%{opacity:1} 92%{opacity:1} 100%{left:calc(95% - 10px); opacity:0}}
+  .stage{position:relative; z-index:2; background:transparent; padding-top:2px}
+  .stage .num{
+    font-family:var(--mono); font-size:.78rem; font-weight:700; color:var(--ground);
+    width:38px; height:38px; border-radius:50%; background:var(--ink-soft);
+    display:grid; place-items:center; margin-bottom:16px; border:3px solid var(--ground);
+  }
+  .stage.on .num{background:var(--signal)}
+  .stage .st-name{font-family:var(--mono); font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--signal); margin-bottom:7px}
+  .stage h3{font-size:1rem; margin-bottom:8px}
+  .stage p{font-size:.9rem; color:var(--ink-soft); line-height:1.5}
+  .flagnote{
+    margin-top:40px; border:1px solid var(--flag); border-left-width:4px;
+    border-radius:10px; background:color-mix(in srgb,var(--flag) 9%,var(--ground-2));
+    padding:20px 22px; display:flex; gap:16px; align-items:flex-start;
+  }
+  .flagnote .tag{font-family:var(--mono); font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--flag); font-weight:700; white-space:nowrap; padding-top:2px}
+  .flagnote p{color:var(--ink); font-size:.98rem}
+
+  /* ---------- VALUE ---------- */
+  .cards{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:40px}
+  .card{
+    background:var(--ground-2); border:1px solid var(--line); border-radius:var(--radius);
+    padding:26px 24px 28px; display:flex; flex-direction:column; gap:12px;
+    transition:border-color .2s ease, transform .2s ease;
+  }
+  .card:hover{border-color:var(--signal); transform:translateY(-3px)}
+  .card .ic{width:34px; height:34px; color:var(--signal)}
+  .card h3{font-size:1.06rem}
+  .card p{color:var(--ink-soft); font-size:.95rem; line-height:1.55}
+
+  /* ---------- STATUS ---------- */
+  .status{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:40px}
+  .track{background:var(--ground-2); border:1px solid var(--line); border-radius:var(--radius); padding:24px 22px; border-top:3px solid var(--line)}
+  .track.built{border-top-color:var(--matched)}
+  .track.needs{border-top-color:var(--pending)}
+  .track.parked{border-top-color:var(--ink-faint)}
+  .track .th{display:flex; align-items:center; gap:10px; margin-bottom:6px}
+  .track .th h3{font-size:1.08rem}
+  .track .badge{font-family:var(--mono); font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; padding:4px 9px; border-radius:100px; font-weight:700}
+  .track.built .badge{color:var(--matched); background:color-mix(in srgb,var(--matched) 16%,transparent)}
+  .track.needs .badge{color:var(--pending); background:color-mix(in srgb,var(--pending) 16%,transparent)}
+  .track.parked .badge{color:var(--ink-faint); background:color-mix(in srgb,var(--ink-faint) 16%,transparent)}
+  .track > p.sub{color:var(--ink-soft); font-size:.9rem; margin-bottom:16px}
+  ul.items{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:11px}
+  ul.items li{position:relative; padding-left:24px; font-size:.93rem; color:var(--ink); line-height:1.45}
+  ul.items li::before{
+    content:""; position:absolute; left:0; top:.5em; width:9px; height:9px; border-radius:2px;
+    background:var(--tick,var(--matched));
+  }
+  .track.needs li::before{background:var(--pending); border-radius:50%}
+  .track.parked li{color:var(--ink-soft)}
+  .track.parked li::before{background:transparent; border:1px solid var(--ink-faint); border-radius:50%}
+  .ask{font-family:var(--mono); color:var(--pending); font-weight:700; margin-right:2px}
+  .track.needs li em{font-style:normal; display:block; color:var(--ink-soft); font-size:.85rem; margin-top:2px}
+
+  /* ---------- ROLES ---------- */
+  .roles{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:36px}
+  .role{border:1px solid var(--line); border-radius:var(--radius); padding:22px 22px 24px; background:var(--ground-2)}
+  .role .hat{font-family:var(--mono); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; color:var(--signal); margin-bottom:10px}
+  .role h3{font-size:1.05rem; margin-bottom:8px}
+  .role p{color:var(--ink-soft); font-size:.93rem; line-height:1.5}
+  .roles-note{margin-top:22px; color:var(--ink-soft); font-size:.95rem; max-width:60ch}
+  .roles-note b{color:var(--ink)}
+
+  /* ---------- FOOTER ---------- */
+  footer{padding:clamp(44px,6vw,72px) 0 clamp(56px,7vw,80px); border-top:1px solid var(--line)}
+  footer .fl{display:flex; justify-content:space-between; gap:24px; flex-wrap:wrap; align-items:center}
+  footer .mono{font-family:var(--mono); font-size:.74rem; letter-spacing:.06em; color:var(--ink-faint)}
+  footer .honest{max-width:52ch; color:var(--ink-soft); font-size:.92rem; line-height:1.55}
+
+  .kicker{font-family:var(--mono); font-size:.72rem; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint)}
+
+  @media (max-width:900px){
+    .hero-grid{grid-template-columns:1fr; gap:38px}
+    .hero .plan-wrap{max-width:420px}
+    .why-body{grid-template-columns:1fr}
+    .rail{grid-template-columns:1fr; gap:0}
+    .rail::before,.rail::after{display:none}
+    .stage{display:grid; grid-template-columns:38px 1fr; gap:16px; padding:16px 0; border-bottom:1px solid var(--line)}
+    .stage .num{margin-bottom:0}
+    .stage:last-child{border-bottom:none}
+    .cards,.status,.roles{grid-template-columns:1fr}
+  }
+  @media (max-width:560px){
+    .chips{gap:8px}
+  }
+  /* ---------- GO-LIVE CTA ---------- */
+  .golive-panel{
+    background:var(--ground-2); border:1px solid var(--line); border-top:3px solid var(--pending);
+    border-radius:18px; padding:clamp(28px,4vw,52px);
+  }
+  .golive-list{display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(22px,3vw,34px); margin-top:38px}
+  .gitem{display:flex; flex-direction:column; gap:10px}
+  .gitem .n{
+    font-family:var(--mono); font-size:1.4rem; font-weight:700; color:var(--pending);
+    line-height:1; display:flex; align-items:baseline; gap:8px;
+  }
+  .gitem .n span{font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint)}
+  .gitem h3{font-size:1.08rem}
+  .gitem p{color:var(--ink-soft); font-size:.94rem; line-height:1.55}
+  .golive-foot{
+    margin-top:34px; padding-top:22px; border-top:1px solid var(--line);
+    display:flex; gap:14px; align-items:baseline; flex-wrap:wrap;
+    font-family:var(--mono); font-size:.82rem; letter-spacing:.03em; color:var(--ink-soft);
+  }
+  .golive-foot b{color:var(--pending); font-weight:700; text-transform:uppercase; letter-spacing:.1em; font-size:.72rem}
+  @media (max-width:900px){
+    .golive-list{grid-template-columns:1fr; gap:24px}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .plan .ring{animation:none; opacity:.28}
+    .rail::after{animation:none; opacity:0}
+    .card{transition:none}
+  }
+</style>
+
+<div class="page">
+<div class="wrap">
+
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="brandline">
+      <div class="mark">J2</div>
+      <div class="who">
+        <b>J2 Communications</b><br>Wireless Site Survey Automation
+      </div>
+    </div>
+
+    <div class="hero-grid">
+      <div>
+        <p class="eyebrow">Field photos &amp; Ekahau in — client report out</p>
+        <h1>The report your clients receive, built for you automatically.</h1>
+        <p class="lead">A raw Ekahau export isn't something you can hand a client. This tool turns your field AP photos and survey files into the <span class="signalword">branded Word report</span> your clients already expect — without the manual assembly.</p>
+        <div class="chips">
+          <span class="chip"><span class="dot"></span>v1 built &amp; deployed</span>
+          <span class="chip"><span class="dot"></span>122 / 122 tests passing</span>
+          <span class="chip"><span class="dot"></span>Full pipeline verified live</span>
+        </div>
+      </div>
+
+      <div class="plan-wrap">
+        <!-- Plan-view coverage map: AP nodes emitting RF rings; one node flagged -->
+        <svg class="plan" viewBox="0 0 440 380" role="img" aria-label="Floor plan showing access points and their wireless coverage, with one access point flagged.">
+          <defs>
+            <linearGradient id="floorfill" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="var(--panel)"/>
+              <stop offset="1" stop-color="var(--ground-2)"/>
+            </linearGradient>
+          </defs>
+          <!-- building envelope -->
+          <rect x="20" y="20" width="400" height="340" rx="10" fill="url(#floorfill)" stroke="var(--line)" stroke-width="1.5"/>
+          <!-- interior walls -->
+          <path d="M20 170 H250 M250 20 V250 M250 250 H420 M150 250 V360" stroke="var(--line)" stroke-width="1.5" fill="none"/>
+          <!-- door gaps drawn as short accent ticks -->
+          <path d="M250 120 v34 M250 300 v-30 M118 250 h30" stroke="var(--signal)" stroke-width="2" opacity=".5" fill="none"/>
+
+          <!-- AP node: matched (cyan) -->
+          <g class="node" transform="translate(130,95)">
+            <circle class="ring" r="46" fill="var(--signal)" opacity=".16"/>
+            <circle class="ring r2" r="46" fill="var(--signal)" opacity=".16"/>
+            <circle class="ring r3" r="46" fill="var(--signal)" opacity=".16"/>
+            <circle r="8" fill="var(--signal)"/>
+            <circle r="8" fill="none" stroke="var(--ground)" stroke-width="2"/>
+          </g>
+          <!-- AP node: matched -->
+          <g class="node" transform="translate(335,150)">
+            <circle class="ring" r="52" fill="var(--signal)" opacity=".14"/>
+            <circle class="ring r2" r="52" fill="var(--signal)" opacity=".14"/>
+            <circle class="ring r3" r="52" fill="var(--signal)" opacity=".14"/>
+            <circle r="8" fill="var(--signal)"/>
+            <circle r="8" fill="none" stroke="var(--ground)" stroke-width="2"/>
+          </g>
+          <!-- AP node: matched -->
+          <g class="node" transform="translate(320,305)">
+            <circle class="ring" r="44" fill="var(--signal)" opacity=".15"/>
+            <circle class="ring r2" r="44" fill="var(--signal)" opacity=".15"/>
+            <circle r="8" fill="var(--signal)"/>
+            <circle r="8" fill="none" stroke="var(--ground)" stroke-width="2"/>
+          </g>
+          <!-- AP node: FLAGGED (coral) — name mismatch -->
+          <g class="node node-flag" transform="translate(95,300)">
+            <circle class="ring" r="40" fill="var(--flag)" opacity=".18"/>
+            <circle class="ring r2" r="40" fill="var(--flag)" opacity=".18"/>
+            <circle r="8" fill="var(--flag)"/>
+            <circle r="8" fill="none" stroke="var(--ground)" stroke-width="2"/>
+            <text x="15" y="4" font-family="ui-monospace, Consolas, Menlo, monospace" font-size="11" font-weight="700" fill="var(--flag)">AP-07   name mismatch</text>
+          </g>
+
+          <!-- labels -->
+          <text x="130" y="72" font-family="ui-monospace, Consolas, Menlo, monospace" font-size="11" fill="var(--ink-soft)" text-anchor="middle">AP-01-NE</text>
+          <text x="335" y="127" font-family="ui-monospace, Consolas, Menlo, monospace" font-size="11" fill="var(--ink-soft)" text-anchor="middle">AP-04</text>
+          <text x="320" y="282" font-family="ui-monospace, Consolas, Menlo, monospace" font-size="11" fill="var(--ink-soft)" text-anchor="middle">AP-05-SW</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= WHY ================= -->
+  <section class="why">
+    <p class="eyebrow">Why it exists</p>
+    <p class="pull">The gap isn't the survey. It's everything between the survey and the deliverable.</p>
+    <div class="why-body">
+      <div>
+        <p>Ekahau tells you how the network performs. Your clients, though, don't get handed a heatmap — they get a report: a summary, the scope, the pass/fail criteria, findings, and <strong>as-built photo documentation for every access point</strong>. Assembling that by hand, job after job, is where the hours go.</p>
+      </div>
+      <div>
+        <p>The most tedious part is stitching two field photos to the right AP, by name, dozens of times per site. It's tedious enough that it's the first thing to get rushed or skipped.</p>
+        <p>This tool makes that step <strong>free</strong> — and <span class="signalword">loud</span> the moment a photo's AP name doesn't match the survey, so nothing lands in a client's report wrong and quiet.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= HOW / PIPELINE ================= -->
+  <section class="how">
+    <p class="eyebrow">How it works</p>
+    <h2 class="col">One path, six steps — from the phone in the field to the file the client opens.</h2>
+
+    <div class="rail">
+      <div class="stage on">
+        <div class="num">1</div>
+        <div class="st-name">Capture</div>
+        <h3>Field photos</h3>
+        <p>The tech shoots Close + Far of each AP on a phone, tags the exact AP name, uploads. Nothing else runs on the device.</p>
+      </div>
+      <div class="stage on">
+        <div class="num">2</div>
+        <div class="st-name">Parse</div>
+        <h3>Read the survey</h3>
+        <p>Each Ekahau <span style="font-family:var(--mono);font-size:.85em">.esx</span> is read into a clean AP list — names, models, band, channel, power. Multi-floor jobs combine.</p>
+      </div>
+      <div class="stage on">
+        <div class="num">3</div>
+        <div class="st-name">Merge</div>
+        <h3>Join on AP name</h3>
+        <p>Photos meet survey APs on exact name. A match pairs up. A mismatch is flagged — never guessed, never silently merged.</p>
+      </div>
+      <div class="stage on">
+        <div class="num">4</div>
+        <div class="st-name">Resolve</div>
+        <h3>Clear the flags</h3>
+        <p>The drafter settles each flag. One shared reason — "Ceiling access denied" — can apply to many APs at once.</p>
+      </div>
+      <div class="stage on">
+        <div class="num">5</div>
+        <div class="st-name">Generate</div>
+        <h3>Branded report</h3>
+        <p>A Word document is filled in your branding: summary, scope, criteria, findings, per-AP inventory with photos, appendices.</p>
+      </div>
+      <div class="stage on">
+        <div class="num">6</div>
+        <div class="st-name">Approve</div>
+        <h3>Sign off &amp; lock</h3>
+        <p>An owner reviews and signs off. The job locks. What comes out is the file your client receives.</p>
+      </div>
+    </div>
+
+    <div class="flagnote">
+      <span class="tag">The rule</span>
+      <p>When a photo's AP name doesn't match the survey — or two survey files disagree about the same AP — the tool <strong>stops and flags it</strong> for a person to decide. It will never quietly pair the wrong photo to an AP. That single rule is what keeps every report trustworthy.</p>
+    </div>
+  </section>
+
+  <!-- ================= VALUE ================= -->
+  <section class="value">
+    <p class="eyebrow">What it does for J2</p>
+    <h2 class="col">Less assembly, fewer mistakes, the same polished report every time.</h2>
+
+    <div class="cards">
+      <div class="card">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7l5 3 5-8 6 14H3z" stroke-linejoin="round"/></svg>
+        <h3>Photo matching becomes free</h3>
+        <p>The step people rush or skip is automatic. Every AP arrives paired with its Close and Far shots.</p>
+      </div>
+      <div class="card">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l8 4v5c0 4.5-3 8-8 9-5-1-8-4.5-8-9V7z" stroke-linejoin="round"/><path d="M12 8v4M12 15v.5"/></svg>
+        <h3>Loud on mismatch, never silently wrong</h3>
+        <p>A name that doesn't line up is flagged and held for a human — so an error never reaches the client unnoticed.</p>
+      </div>
+      <div class="card">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+        <h3>The same report every time</h3>
+        <p>Consistent structure and branding across every tech and every job — not a document rebuilt from scratch each time.</p>
+      </div>
+      <div class="card">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3.2"/><path d="M12 4v2M12 18v2M4 12h2M18 12h2M6 6l1.5 1.5M16.5 16.5L18 18M18 6l-1.5 1.5M7.5 16.5L6 18"/></svg>
+        <h3>Your branding, not ours</h3>
+        <p>Logo, colors and company name come from settings. The engine re-skins per client — and can be licensed to other survey shops.</p>
+      </div>
+      <div class="card">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>
+        <h3>Nothing to install in the field</h3>
+        <p>Capture is a web link on the tech's phone. No app store, no setup, no training day.</p>
+      </div>
+      <div class="card">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+        <h3>Built to hand off</h3>
+        <p>One language, standard parts, a fixed-fee build. Cheap to run and maintain long after it's delivered.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STATUS ================= -->
+  <section class="statuswrap">
+    <p class="eyebrow">Where it stands today</p>
+    <h2 class="col">The machinery already runs. What's left is <span class="signalword">yours</span> to hand over.</h2>
+
+    <div class="status">
+      <div class="track built">
+        <div class="th"><h3>Built now</h3><span class="badge">Working</span></div>
+        <p class="sub">Deployed &amp; UAT-passed, running on sample survey files.</p>
+        <ul class="items">
+          <li>Phone capture for field photos</li>
+          <li>Survey (.esx) reader &amp; AP list</li>
+          <li>Merge with flag list on mismatch</li>
+          <li>Bulk override reasons for the drafter</li>
+          <li>Branded Word report — generate &amp; download</li>
+          <li>Owner approve &amp; lock</li>
+        </ul>
+      </div>
+
+      <div class="track needs">
+        <div class="th"><h3>Needs J2</h3><span class="badge">Three asks</span></div>
+        <p class="sub">Small handovers that swap the samples for the real thing.</p>
+        <ul class="items">
+          <li><span class="ask">1.</span>One real post-install <b style="font-family:var(--mono);font-weight:600">.esx</b><em>Confirms the reader matches your Ekahau output.</em></li>
+          <li><span class="ask">2.</span>One gold-standard client Word report<em>So the template mirrors what your clients already expect.</em></li>
+          <li><span class="ask">3.</span>Confirm the threshold model<em>Built-in per-vertical criteria, or entered per job?</em></li>
+          <li><span class="ask">+</span>Optional: Nextcloud login for shared storage.</li>
+        </ul>
+      </div>
+
+      <div class="track parked">
+        <div class="th"><h3>Deliberately parked</h3><span class="badge">Not v1</span></div>
+        <p class="sub">Designed to slot in later — intentionally out of scope now.</p>
+        <ul class="items">
+          <li>Hamina survey ingest</li>
+          <li>AI wall-attenuation inference</li>
+          <li>Self-rendered heatmaps</li>
+          <li>Per-role logins &amp; owner dashboard</li>
+          <li>Multi-tenant relicensing UI</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ROLES ================= -->
+  <section class="roleswrap">
+    <p class="eyebrow">Who does what</p>
+    <h2 class="col">Roles are hats, not people.</h2>
+    <div class="roles">
+      <div class="role">
+        <div class="hat">In the field</div>
+        <h3>Tech</h3>
+        <p>Captures Close + Far and the exact AP name, then uploads. No merging or processing on the phone.</p>
+      </div>
+      <div class="role">
+        <div class="hat">At the desk</div>
+        <h3>Drafter / Editor</h3>
+        <p>Pushes the merge, clears flags, writes the summary and recommendations, generates the document, owns the deliverable.</p>
+      </div>
+      <div class="role">
+        <div class="hat">Sign-off</div>
+        <h3>Approver</h3>
+        <p>Reviews and locks the job — usually Josh or Jeff. Once approved, the report is final.</p>
+      </div>
+    </div>
+    <p class="roles-note">On a solo job, one person wears all three hats. On a team job, it's a clean handoff — <b>capture → draft → approve</b> — with the tool tracking where each job is.</p>
+  </section>
+
+  <!-- ================= GO-LIVE CTA ================= -->
+  <section class="golivewrap">
+    <p class="eyebrow">What we need from you</p>
+    <h2 class="col">Three handovers flip it from sample to live.</h2>
+    <p class="lead col" style="margin-top:14px">The engine already runs end to end. These are the only things it needs from J2 to start producing your real client reports.</p>
+
+    <div class="golive-panel" style="margin-top:38px">
+      <div class="golive-list">
+        <div class="gitem">
+          <div class="n">1<span>Survey file</span></div>
+          <h3>One real post-install <b style="font-family:var(--mono);font-weight:600">.esx</b></h3>
+          <p>From any recent J2 job. Confirms the reader matches your Ekahau output exactly, on your real AP naming.</p>
+        </div>
+        <div class="gitem">
+          <div class="n">2<span>Deliverable</span></div>
+          <h3>One gold-standard Word report</h3>
+          <p>The client deliverable you're proudest of. The template gets modeled on it — structure, wording, and your branding.</p>
+        </div>
+        <div class="gitem">
+          <div class="n">3<span>Decision</span></div>
+          <h3>How thresholds work</h3>
+          <p>Do pass/fail criteria live as built-in per-vertical defaults, or get entered per job? Either works — we build to your call.</p>
+        </div>
+      </div>
+      <div class="golive-foot">
+        <b>Optional</b>
+        <span>Nextcloud login, if you'd prefer shared cloud storage over the built-in local store.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FOOTER ================= -->
+  <footer>
+    <div class="fl">
+      <div>
+        <p class="kicker">Honest framing</p>
+        <p class="honest" style="margin-top:10px">The placeholder wording and branding in today's sample aren't the final J2 look — that arrives with your gold-standard report. What you're seeing is your own survey file's future home inside machinery that already works end to end.</p>
+      </div>
+      <p class="mono">J2 Communications · Site Survey Automation · v1</p>
+    </div>
+  </footer>
+
+</div>
+</div>

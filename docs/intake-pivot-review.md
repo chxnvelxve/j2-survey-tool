@@ -4,6 +4,8 @@
 **Source of truth used:** [`meeting-notes-intake-pivot.md`](meeting-notes-intake-pivot.md) on branch `cursor/intake-pivot-meeting-notes-3614` ([PR #5](https://github.com/chxnvelxve/j2-survey-tool/pull/5)), plus the discovery transcript that produced it.  
 **Deliberately ignored as stale for product direction:** `docs/PHASES.md` body, phone-capture / Job-upload architecture, and the pre-meeting demo pack (`meeting_*`, `owner_brief.md` on `cursor/j2-meeting-demo-prep-fac6`). Those describe the *built* app, not the intended one after Josh/Jeff.
 
+**For Claude / pricing next:** see [`claude-handoff-post-pivot.md`](claude-handoff-post-pivot.md) (no-OCR ballpark, chunked Word generation, hosting, stale-vs-truth rules).
+
 ---
 
 ## Verdict

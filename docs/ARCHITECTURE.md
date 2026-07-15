@@ -1,5 +1,11 @@
 # Architecture
 
+> **Scope pivot (2026-07-15):** Intended intake is Zoho → Nextcloud project pick,
+> not phone/tech upload. Read
+> [`meeting-notes-intake-pivot.md`](meeting-notes-intake-pivot.md) before planning
+> new work. Diagrams below may still describe the *currently built* upload-centric
+> flow until the rebuild lands.
+
 ## Overview
 
 Three-stage, swappable pipeline wrapped in a web app. The web app manages **Jobs**;

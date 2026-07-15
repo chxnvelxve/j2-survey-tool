@@ -1,21 +1,19 @@
-# Claude handoff — post-pivot (read this first)
+# Claude / Quad handoff — post-pivot (read this first)
 
-**Audience:** Claude / Codex (or any new agent) helping with pricing, SOW, phase rewrite, or rebuild planning.  
-**Owner:** taking this into Claude after the Josh/Jeff intake pivot.  
-**Date:** 2026-07-15
+**Audience:** Claude / Quad Max (or Codex) helping with pricing, SOW, phase rewrite, or rebuild planning.  
+**Owner:** LOG founder; Cursor Pro Plus is the main day-to-day builder; Quad is for heavy planning/QA.  
+**Date:** 2026-07-15 (updated after owner pricing / hosting / builder / sales-template decisions)
 
 ---
 
 ## 0. How to read the repo (critical)
 
-### Source of truth (post-meeting)
-
-Use these, in this order:
+### Source of truth (post-meeting) — read in this order
 
 1. **`docs/meeting-notes-intake-pivot.md`** — product intent after Josh clarified Zoho → Nextcloud intake ([PR #5](https://github.com/chxnvelxve/j2-survey-tool/pull/5), branch `cursor/intake-pivot-meeting-notes-3614`).  
-   If this file is missing on your checkout, fetch that branch/PR first.
+   If missing on checkout, fetch that branch/PR first.
 2. **`docs/intake-pivot-review.md`** — owner review of that pivot ([PR #6](https://github.com/chxnvelxve/j2-survey-tool/pull/6)).
-3. **This file** — pricing opinion (no OCR), large-doc approach, hosting, and agent rules.
+3. **This file** — pricing (partner vs list), no builder-hosting, builder split, LOG sales baselines, large-doc approach, and the copy-paste Quad prompt.
 
 ### Stale by default (pre-pivot)
 
@@ -32,7 +30,7 @@ Pre-pivot *code and patterns* that still serve the pivot are fair to reuse:
 - `parser → merge → generator` stage boundaries
 - Exact AP join + hard-fail / flag philosophy
 - Bulk override reasons
-- `.esx` parser shell, Nextcloud WebDAV shell, branding-in-config, docxtpl generator mechanics, deploy/Tailscale pattern
+- `.esx` parser shell, Nextcloud WebDAV shell, branding-in-config, docxtpl generator mechanics, deploy patterns
 
 Reuse **implementation**, not **old product assumptions**. If old docs conflict with the pivot, the pivot wins.
 
@@ -41,7 +39,9 @@ Reuse **implementation**, not **old product assumptions**. If old docs conflict 
 - Plan or price phone/PWA tech capture as v1.
 - Put ThruLine or Layer-1 expansion in the first SOW.
 - Assume OCR is in scope (owner is pricing **without** OCR unless Josh insists later).
-- Treat 300–400 pages as every job — it is the **upper bound when AP count is high** (one page per AP).
+- Treat 300–400 pages as every job — upper bound when AP count is high (one page per AP).
+- Put **builder-provided hosting** in the SOW (see §4). Owner has home internet only and is not selling hosting yet.
+- Sprawl into coding until owner says go.
 
 ---
 
@@ -53,94 +53,149 @@ Photo path **without OCR:** prefer desk rename to short AP ID; sequential pairs 
 
 ---
 
-## 2. Professional pricing opinion (no OCR)
+## 2. Pricing structure (what the numbers mean)
 
-This is **owner guidance for a conversation with Claude / Josh**, not a signed quote. Refine after samples (`.esx`, IDF PDF, gold page, Nextcloud tree).
+### Partner band vs stranger / list band
 
-### What “no OCR” still includes
+| Frame | Ballpark (no OCR fixed rebuild) | What it is |
+|-------|----------------------------------|------------|
+| **Josh / design-partner (use this for J2 quote)** | **~$6k–$8k** clean samples; **~$8k–$12k** messier | Already the **fair / mentor-friend zone**. Not a fake list price waiting for a second discount. |
+| **Cold commercial / stranger list** | **~$12k–$20k** clean; **~$18k–$28k** messier/polish | Same scope **without** friend discount (~1.5–2.5× partner). Optional if owner shows “list vs partner” in a proposal. |
 
-| In scope | Out of scope (for this price band) |
-|----------|-------------------------------------|
-| Nextcloud project browse/pick + locate `.esx` / photos / IDF | OCR / sticker reading / auto-suggest from image text |
-| Parse `.esx`, parse IDF PDF (text), merge + flags | ThruLine node, Zoho API, Hamina, AI RF |
-| Manual photo assign + sequential close/far pairing | Native Mac app distribution (shared URL is the plan) |
-| Word: front matter + per-AP pages; draft/final markers | Full RBAC / multi-tenant relicensing UI |
-| Light shared access (owners + Casey admin), deploy on one VM/URL | Managed 24/7 ops beyond a modest retainer |
+**Do not** invent a $20k sticker only to “discount” to $10k. If showing both, label them honestly: partner vs list.
 
-### Ballpark fixed rebuild (design-partner honesty)
+**Old ~$2.5k scaffold is obsolete** as the commercial frame — wrong intake model.
 
-Given salvageable pipeline shells but a **real UX + IDF + template rebuild**:
+### What the fixed rebuild fee covers (no OCR)
 
-| Band | When it fits |
-|------|----------------|
-| **~$6,000–$8,000** | Samples are clean (text IDF, clear folder tree, short AP IDs match), template close to one gold page, desk rename mostly works, shared URL on existing-style VPS |
-| **~$8,000–$12,000** | Messier IDF tables, more merge-flag UI, large-doc assembly work, more Nextcloud edge cases, stronger template fidelity |
-| **Above ~$12k** | Only if samples prove ugly (scan IDF, weak ID equality, heavy custom Word layout) — re-scope before quoting that high |
+| In scope | Out of scope |
+|----------|----------------|
+| Nextcloud project browse/pick + locate `.esx` / photos / IDF | OCR / sticker reading |
+| Parse `.esx`, parse IDF PDF (text), merge + flags | ThruLine, Zoho API, Hamina, AI RF |
+| Manual photo assign + sequential close/far pairs | Native Mac app distribution |
+| Word: front matter + per-AP pages (chunked generate); draft/final markers | Full RBAC / multi-tenant relicensing UI |
+| Light shared access; deploy instructions onto **client-provided** VPS/URL | Builder hosting / home-lab hosting |
+| | Managed 24/7 ops (use retainer if needed) |
 
-**Old ~$2.5k scaffold is not the right frame anymore.** That bought the wrong intake model. Be transparent: rebuild fee replaces/supersedes that mental model; apply an explicit partner discount if you want goodwill — **do not** invent a $20k sticker to “discount” to $10k.
+### Retainer (optional separate line)
 
-### Retainer + hosting (separate lines)
+**~$400–$800 / month** modest: template tweaks, field-map fixes, Nextcloud quirks, training, small changes. Bridge toward ThruLine later — do not stuff ThruLine into the purchase price.
 
-| Line | Suggested talk track |
-|------|----------------------|
-| **Retainer** | **~$400–$800 / month** modest: template tweaks, field-map fixes, Nextcloud quirks, training, small changes. Bridge toward ThruLine later without stuffing it into the purchase price. |
-| **VM / shared URL** | One small VPS is the right architecture (they live in Nextcloud; no need for three local Mac installs). Infra cost is often **~$20–$60 / mo** raw; if you **manage** it for them, add a clear **hosting/ops** line (e.g. **+$50–$150 / mo** bundled with retainer, or itemized). They already accepted “rent a VM + URL” if needed. |
+### OCR (optional later add-on)
 
-### Optional later (not in the no-OCR fixed fee)
+**+$1.5k–$3k** typical if rename proves painful; never silent auto-merge. Not in base quote.
 
-- Photo OCR assist + batch confirm — separate add-on once rename proves painful (often **+$1.5k–$3k** depending on accuracy expectations; never silent auto-merge).
+### Lock dollars after samples
 
-**Lock dollars only after Josh’s samples.** Use the bands above in Claude to draft SOW language; adjust one band up/down when IDF/`.esx`/folder reality is known.
+Provisional until Josh provides: Nextcloud tree, real `.esx`, IDF PDF, gold Word/PDF page, AP ID equality confirmation.
 
 ---
 
-## 3. Large Word output — don’t rely on one 300–400 page shot
+## 3. Large Word output — chunk, don’t monolithic-shot
 
-Not every job is huge; high AP count ⇒ one page per AP ⇒ can get large. **Correctness and ops** are easier if generation is **chunked**, then assembled (or delivered as a binder).
+Not every job is 300–400 pages; high AP count ⇒ one page per AP can get large.
 
-### Recommended approach
-
-1. **Unit of work = one AP page** (plus a separate **front-matter** render).  
-   Validate/generate/retry per AP without redoing the whole book.
-2. **Assemble at the end** into one `.docx` *or* ship a **Nextcloud folder binder**:  
-   `00_front_matter.docx` + `AP_xxx.docx`… + optional final “Combine to single file” step.
-3. **Write progress + draft/final markers** into the Nextcloud project so concurrent users see status; failed AP pages are re-runnable.
-4. Keep **manual “Generate”** (Drafter push) — discovery of files ≠ auto-fire a 400-page job.
-
-### Why this is better than one monolithic job
-
-- Failures don’t waste a full run  
-- Easier to QA a single AP page against the gold sample  
-- Memory/timeout risk drops on a small VM  
-- Parallelism later is optional; start sequential
-
-Still deliver **one client Word file** when they need it — assembly is an implementation detail, not a product compromise.
+1. **Unit of work = one AP page** (+ separate front-matter render).
+2. **Assemble at end** into one `.docx`, *or* Nextcloud binder (`00_front_matter.docx` + `AP_xxx.docx`…) then optional combine.
+3. Progress + draft/final markers in Nextcloud; failed AP pages re-runnable.
+4. Manual Drafter **Generate** — file discovery ≠ auto-fire a huge job.
 
 ---
 
-## 4. Hosting opinion
+## 4. Hosting — stay out of the SOW for now
 
-- **Shared URL on one VM** = best fit (cost, three Mac users, Nextcloud-centric shop).  
-- Local-per-Mac apps = more install/sync pain for little gain.  
-- Nextcloud remains the **filesystem of record**; the app is the processor with a bookmarkable URL (Tailscale or similar is fine for v1).  
-- Hosting can be **owner-managed VM** or **you-managed** as an extra monthly line — discuss explicitly so rebuild fee ≠ perpetual free ops.
+**Owner decision:** Do **not** sell or include builder hosting. Owner only has home internet and does not want to host until they can afford proper hosting later.
 
----
+**Allowed talk track only:**
 
-## 5. What Claude should produce next (suggested)
+- App is a **shared URL** architecture (not three local Mac apps).
+- **Client rents/provides the VPS** (Josh/Jeff already open to renting a VM), **or** deploy is deferred.
+- Nextcloud stays their filesystem of record.
+- No builder home-lab hosting line. No managed hosting fee in this SOW.
 
-1. One-page **SOW** using the no-OCR band + retainer + optional hosting line (mark dollars as provisional until samples).  
-2. Rewritten **phase plan** centered on Nextcloud project pick → IDF parse → photo ladder (no OCR) → chunked generator → markers. Park phone capture.  
-3. Short **Josh ask list** (tree, `.esx`, IDF, gold page, AP ID equality, who finalizes).  
-4. Do **not** start large coding until owner says go.
+If deploy is mentioned at all: “runs on a small VM you provide; we hand deploy docs / help once” — not “we host it.”
 
 ---
 
-## 6. Quick links
+## 5. Who builds what (Cursor vs Quad)
+
+| Role | Tool | Does |
+|------|------|------|
+| **Main builder** | **Cursor Pro Plus** | Day-to-day implementation in bounded phases (Ask → Plan → Build). |
+| **Heavy planner / QA** | **Quad Max** | SOW, phase rewrite, architecture passes, nasty IDF/merge/generator design, QA after a slice or when something fails twice. |
+
+Do **not** make Quad the main continuous coder for this repo — prefer Cursor for tight sequential slices; use Quad for big resets and review.
+
+---
+
+## 6. LOG founder sales baselines
+
+Owner has personal **LOG founder company** baseline docs (pre-sales, sales, SOW/proposal formats, etc.).
+
+**When owner attaches those baselines:**
+
+- **Use the LOG format / structure.**
+- **Fill substance from the pivot docs** (this file + meeting notes + review).
+- **Do not “fix” or redesign** the sales system unless something is clearly broken — ask before rewriting templates.
+- Hand only the templates needed for this engagement (SOW / proposal / retainer), not unrelated company docs.
+
+---
+
+## 7. What Quad should produce in this session (default)
+
+Unless owner asks otherwise:
+
+1. **SOW / proposal** in LOG baseline format (if attached); else clean one-pager.  
+   - Partner price band for J2; optional list column.  
+   - No OCR in base.  
+   - Retainer optional.  
+   - **No hosting fee**; client VM or deferred deploy only.  
+   - Dollars marked provisional until samples.
+2. Rewritten **phase plan** (Nextcloud pick → IDF parse → photo ladder no OCR → chunked generator → markers). Park phone capture.
+3. Short **Josh ask list** (tree, `.esx`, IDF, gold page, AP ID equality, who finalizes).
+4. **No large coding** until owner says go.
+
+---
+
+## 8. Quick links
 
 | Doc | Role |
 |-----|------|
-| `docs/meeting-notes-intake-pivot.md` | Product pivot (truth) |
-| `docs/intake-pivot-review.md` | Review of pivot / risks |
-| `docs/claude-handoff-post-pivot.md` | This file — Claude briefing + price/hosting/doc strategy |
-| Pre-pivot `PHASES` / demo / phone docs | Stale for direction; salvage code only where pivot still needs it |
+| `docs/meeting-notes-intake-pivot.md` | Product pivot (truth) — PR #5 |
+| `docs/intake-pivot-review.md` | Review / risks — PR #6 |
+| `docs/claude-handoff-post-pivot.md` | This file — Quad briefing + prompt |
+| LOG sales baselines (owner-attached) | Format only; pivot fills content |
+| Pre-pivot `PHASES` / demo / phone docs | Stale for direction; salvage code only |
+
+---
+
+## 9. Copy-paste prompt for Quad
+
+Paste into Quad Max. Attach: this file, `meeting-notes-intake-pivot.md`, `intake-pivot-review.md`, and (if using) your LOG SOW/proposal baselines.
+
+```
+You are helping me price and re-scope the J2 survey tool AFTER the intake pivot.
+
+Read first, in order:
+1) docs/claude-handoff-post-pivot.md
+2) docs/meeting-notes-intake-pivot.md
+3) docs/intake-pivot-review.md
+If I attached LOG founder pre-sales/sales/SOW baselines, use THAT format — fill with pivot substance; do not redesign my sales templates unless something is clearly broken (ask first).
+
+Rules:
+- Pivot docs = source of truth for the product.
+- Everything written before the pivot is STALE for product direction. Pre-pivot code/patterns may be salvaged (parser → merge → generator, hard-fail flags, Nextcloud shell, docxtpl, branding config) but do not plan from old phone/Job-upload assumptions.
+- No OCR in the base quote.
+- No builder hosting in the SOW. I only have home internet and am not selling hosting yet. Shared URL on a CLIENT-provided VPS is fine to mention; deferred deploy is fine. Do not price my hosting.
+- Partner/design-friend band for J2 is already the discounted zone (~$6–8k clean / ~$8–12k messier). Optional stranger/list band (~$12–20k / ~$18–28k). Do NOT invent a fake high sticker to discount from.
+- Old ~$2.5k scaffold frame is obsolete.
+- Retainer optional (~$400–800/mo). OCR is a later add-on only.
+- Large Word docs: recommend chunked per-AP generation + assemble, not one monolithic 300–400 page job.
+- Cursor Pro Plus remains the main builder; you (Quad) do planning/SOW/phase rewrite/QA — do not start a sprawling code rebuild unless I explicitly say go.
+
+Deliver:
+1) SOW/proposal (LOG format if baselines attached) with partner pricing for J2, optional list column, no hosting fee, provisional until Josh samples.
+2) Rewritten phase plan aligned to the pivot.
+3) Short Josh sample/ask list.
+Keep it tight and usable in a client conversation.
+```

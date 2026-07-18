@@ -101,8 +101,11 @@ The builder drives Cursor with **Ask → Plan → Build → Auto**. Support that
 
 ## Phases
 
-See `docs/PHASES.md`. Do not jump ahead — Phase 1 is scaffold + Job CRUD + upload,
-**not** the full pipeline.
+**Current truth:** `docs/PROJECT_STATUS.md` + `docs/handoff.md` (post–Phase 7 UAT;
+Phases 8/9/10 wait on Josh assets). Artifact map: `docs/ENGINEERING_ARTIFACTS.md`.
+
+`docs/PHASES.md` is build-phase history (`needs_review` for “what’s next”) — do not
+treat its early scaffold phases as the current engineering next step.
 
 ## Where things live
 

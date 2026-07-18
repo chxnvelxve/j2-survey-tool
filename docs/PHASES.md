@@ -1,5 +1,9 @@
 # Build Phases
 
+> **Status: `needs_review` for current next-step planning.**  
+> Prefer `docs/handoff.md` + `docs/PROJECT_STATUS.md` for live post-UAT truth.  
+> This file remains useful as sequential build-phase history. See also `docs/ENGINEERING_ARTIFACTS.md`.
+
 Bounded, sequential. **Do not jump ahead.** Each phase is a self-contained work unit
 you can drive in Cursor with Ask → Plan → Build → Auto and review before moving on.
 

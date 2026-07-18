@@ -3,6 +3,10 @@
 > This file is the top-level context for any AI agent (Cursor, Claude) working in
 > this repo. Read it before writing code. Nested `CLAUDE.md` files add
 > directory-specific rules and override this file where they conflict.
+>
+> **2026-07-15:** Product intake pivoted to Zoho → Nextcloud (no tech/phone UI).
+> Start with [`docs/meeting-notes-intake-pivot.md`](docs/meeting-notes-intake-pivot.md)
+> before planning rebuilds, pricing, or phase changes.
 
 ## What this project is
 

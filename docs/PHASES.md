@@ -7,6 +7,11 @@
 Bounded, sequential. **Do not jump ahead.** Each phase is a self-contained work unit
 you can drive in Cursor with Ask → Plan → Build → Auto and review before moving on.
 
+> **2026-07-15:** These phases describe the *built* phone/upload-centric path.
+> Intended product pivot (Nextcloud project pick, IDF PDF, photo ladder) is in
+> [`meeting-notes-intake-pivot.md`](meeting-notes-intake-pivot.md). Rewrite this
+> phase plan before more feature work on the old intake model.
+
 Legend: 🔒 = blocked on Josh (real `.esx` / sample deliverable / Nextcloud).
 
 ---
